@@ -96,31 +96,42 @@ if [ ! -d "$VENV" ]; then
   note "creating virtualenv at $VENV"
   "$PYTHON" -m venv "$VENV"
 fi
-note "installing Python dependencies…"
-"$VENV/bin/pip" install --upgrade pip >/dev/null
-"$VENV/bin/pip" install -r requirements.txt
-ok "Python dependencies installed"
+"$VENV/bin/pip" install --upgrade pip >/dev/null 2>&1 || true
+spin_ok "Installing Python dependencies…" "Python dependencies installed" \
+  "$VENV/bin/pip" install -r requirements.txt
 
 step "Configuration"
 mkdir -p "$ROOT/instance"
+gen_key() { "$VENV/bin/python" -c 'import secrets; print(secrets.token_hex(24))'; }
 if [ ! -f "$ENV_FILE" ]; then
-  note "generating $ENV_FILE with a random SECRET_KEY"
+  note "generating $ENV_FILE with a random secret + API keys"
   SECRET="$("$VENV/bin/python" -c 'import secrets; print(secrets.token_hex(32))')"
+  STORE_KEY="$(gen_key)"
+  SCAN_KEY="$(gen_key)"
   cat >"$ENV_FILE" <<EOF
 FLASK_ENV=production
 SECRET_KEY=$SECRET
 HOST=0.0.0.0
 PORT=$CHOSEN_PORT
-STORE_API_KEY=store-dev-key
-SCAN_API_KEY=scan-dev-key
+STORE_API_KEY=$STORE_KEY
+SCAN_API_KEY=$SCAN_KEY
 SCAN_PUBLIC_URL=http://localhost:5002
 SESSION_COOKIE_SECURE=false
 EOF
   chmod 600 "$ENV_FILE"
-  ok "Created $ENV_FILE"
+  ok "Created $ENV_FILE (strong SECRET_KEY + API keys)"
 else
-  note "updating PORT in existing $ENV_FILE"
+  note "updating existing $ENV_FILE"
   set_env_kv "$ENV_FILE" PORT "$CHOSEN_PORT"
+  # The production guard refuses to start with the old dev defaults — replace them.
+  if grep -q '^STORE_API_KEY=store-dev-key$' "$ENV_FILE"; then
+    set_env_kv "$ENV_FILE" STORE_API_KEY "$(gen_key)"
+    warn "Replaced insecure default STORE_API_KEY with a strong value"
+  fi
+  if grep -q '^SCAN_API_KEY=scan-dev-key$' "$ENV_FILE"; then
+    set_env_kv "$ENV_FILE" SCAN_API_KEY "$(gen_key)"
+    warn "Replaced insecure default SCAN_API_KEY with a strong value"
+  fi
 fi
 
 step "Database"
@@ -145,6 +156,9 @@ else
   note "  .venv/bin/waitress-serve --host \$HOST --port \$PORT wsgi:app"
 fi
 
+STORE_API_KEY_VAL="$(grep '^STORE_API_KEY=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
+SCAN_API_KEY_VAL="$(grep '^SCAN_API_KEY=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
+
 echo
 echo "  ${GREEN}${BOLD}✓ WarehouseDB ready${RESET}"
 echo
@@ -152,4 +166,10 @@ echo "    ${BOLD}Staff board${RESET}    http://<server-ip>:${CHOSEN_PORT}"
 echo "    ${BOLD}Health${RESET}         http://127.0.0.1:${CHOSEN_PORT}/api/health"
 echo "    ${BOLD}Service${RESET}        systemctl status warehousedb"
 echo "    ${BOLD}Public domain${RESET}  deploy/CLOUDFLARE-TUNNEL.md"
+echo
+echo "  ${DIM}Store & Scan must use these same API keys to connect. If they run on${RESET}"
+echo "  ${DIM}another machine, set them there; on this machine their installer copies${RESET}"
+echo "  ${DIM}them automatically.${RESET}"
+echo "    ${BOLD}STORE_API_KEY${RESET}  ${STORE_API_KEY_VAL}"
+echo "    ${BOLD}SCAN_API_KEY${RESET}   ${SCAN_API_KEY_VAL}"
 echo

@@ -26,6 +26,56 @@ warn() { printf '    %s⚠%s  %s\n' "$YELLOW" "$RESET" "$1"; }
 note() { printf '    %s%s%s\n' "$DIM" "$1" "$RESET"; }
 fail() { printf '    %s✖%s  %s\n' "$RED" "$RESET" "$1" >&2; exit 1; }
 
+# spin "Message" cmd args…  — runs the command in the background while showing an
+# animated loader + elapsed time. Output is captured; shown only on failure.
+# Sudo must be pre-authenticated (ensure_sudo) before any spinner that uses sudo.
+__SPIN_LOG=""
+spin() {
+  local msg="$1"; shift
+  local frames=('⠋' '⠙' '⠹' '⠸' '⠼' '⠴' '⠦' '⠧' '⠇' '⠏')
+  local i=0 c start elapsed mins secs code log pid
+  log="$(mktemp)"; __SPIN_LOG="$log"
+  "$@" >"$log" 2>&1 &
+  pid=$!
+  start=$(date +%s)
+  if [ -t 1 ]; then
+    while kill -0 "$pid" 2>/dev/null; do
+      elapsed=$(( $(date +%s) - start ))
+      c="${frames[$(( i % ${#frames[@]} ))]}"
+      if [ "$elapsed" -ge 2 ]; then
+        mins=$(( elapsed / 60 )); secs=$(( elapsed % 60 ))
+        printf '\r    %s%s%s  %s%s%s  %s%d:%02d%s   ' "$CYAN" "$c" "$RESET" "$DIM" "$msg" "$RESET" "$DIM" "$mins" "$secs" "$RESET"
+      else
+        printf '\r    %s%s%s  %s%s%s   ' "$CYAN" "$c" "$RESET" "$DIM" "$msg" "$RESET"
+      fi
+      i=$(( i + 1 ))
+      sleep 0.12
+    done
+    printf '\r\033[2K'
+  fi
+  wait "$pid" && code=0 || code=$?
+  if [ "$code" -eq 0 ]; then rm -f "$log"; __SPIN_LOG=""; fi
+  return "$code"
+}
+
+# spin_ok "Loading…" "Done." cmd args…  — spin, then print ✔ done (or show the
+# captured output and abort on failure).
+spin_ok() {
+  local label="$1" done_msg="$2"; shift 2
+  if spin "$label" "$@"; then
+    ok "$done_msg"
+  else
+    printf '\n'
+    warn "step failed: $label"
+    if [ -n "${__SPIN_LOG:-}" ] && [ -f "${__SPIN_LOG:-}" ]; then
+      printf '    %slast output:%s\n' "$YELLOW" "$RESET"
+      sed 's/^/      /' "$__SPIN_LOG"
+      rm -f "$__SPIN_LOG"; __SPIN_LOG=""
+    fi
+    fail "$label failed"
+  fi
+}
+
 SUDO_KEEPALIVE_PID=""
 
 ensure_sudo() {
@@ -50,13 +100,11 @@ stop_sudo_keepalive() {
 
 # Installs the base toolchain every app needs: Python 3 + venv + pip and friends.
 apt_bootstrap() {
-  note "apt update + upgrade (this can take a minute)…"
-  sudo apt-get update -qq
-  sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq
-  note "installing python3, python3-venv, python3-pip, curl, gnupg…"
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
-    python3 python3-venv python3-pip curl ca-certificates gnupg lsb-release
-  ok "Python $(python3 -V 2>&1 | awk '{print $2}') + pip + venv ready"
+  spin_ok "Updating + upgrading system packages…" "System packages up to date" \
+    bash -c 'sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq'
+  spin_ok "Installing Python, pip, venv, curl, gnupg…" "Base toolchain installed" \
+    bash -c 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-venv python3-pip curl ca-certificates gnupg lsb-release'
+  ok "Python $(python3 -V 2>&1 | awk '{print $2}') ready"
 }
 
 port_is_used() {
@@ -107,15 +155,17 @@ install_cloudflared() {
     ok "cloudflared already installed ($(cloudflared --version 2>/dev/null | head -1))"
     return
   fi
-  note "installing cloudflared (optional tunnel for a public domain later)…"
-  curl -fsSL https://pkg.cloudflare.com/cloudflare-public-v2.gpg | sudo tee /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
-  echo "deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo "${VERSION_CODENAME:-$UBUNTU_CODENAME}") main" \
-    | sudo tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
-  sudo apt-get update -qq
-  if sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq cloudflared; then
+  if spin "Installing cloudflared (public-tunnel support)…" bash -c '
+      set -e
+      curl -fsSL https://pkg.cloudflare.com/cloudflare-public-v2.gpg | sudo tee /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
+      echo "deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo "${VERSION_CODENAME:-$UBUNTU_CODENAME}") main" | sudo tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
+      sudo apt-get update -qq
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq cloudflared
+    '; then
     ok "cloudflared installed"
   else
-    warn "cloudflared apt install failed — see deploy/CLOUDFLARE-TUNNEL.md"
+    rm -f "${__SPIN_LOG:-}" 2>/dev/null || true; __SPIN_LOG=""
+    warn "cloudflared install failed — see deploy/CLOUDFLARE-TUNNEL.md (tunnels optional)"
   fi
 }
 
@@ -141,9 +191,10 @@ ensure_node() {
       return
     fi
   fi
-  note "installing Node.js 22 from NodeSource…"
-  curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
-  sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nodejs
+  spin_ok "Installing Node.js 22 from NodeSource…" "Node.js installed" bash -c '
+      curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+      sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nodejs
+    '
   if command -v corepack >/dev/null 2>&1; then
     sudo corepack enable
   fi
@@ -157,7 +208,7 @@ ensure_pnpm() {
   fi
   ensure_node
   corepack enable
-  corepack prepare pnpm@9 --activate
+  spin_ok "Activating pnpm…" "pnpm ready" corepack prepare pnpm@9 --activate
   ok "pnpm $(pnpm --version 2>/dev/null || echo 9) ready"
 }
 
