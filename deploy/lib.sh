@@ -5,13 +5,22 @@ set -euo pipefail
 # ── Presentation ──────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
   GREEN=$'\033[1;32m'; CYAN=$'\033[1;36m'; YELLOW=$'\033[33m'; RED=$'\033[31m'
-  BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
+  WHITE=$'\033[97m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
 else
-  GREEN=''; CYAN=''; YELLOW=''; RED=''; BOLD=''; DIM=''; RESET=''
+  GREEN=''; CYAN=''; YELLOW=''; RED=''; WHITE=''; BOLD=''; DIM=''; RESET=''
 fi
 
 __STEP=0
-step() { __STEP=$((__STEP + 1)); printf '\n  %s━━━━ Step %d · %s%s\n' "$CYAN" "$__STEP" "$1" "$RESET"; }
+TOTAL_STEPS="${TOTAL_STEPS:-0}"
+__RULE='━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━'
+step() {
+  __STEP=$((__STEP + 1))
+  local n="Step ${__STEP}"
+  if [ "${TOTAL_STEPS:-0}" -gt 0 ]; then n="Step ${__STEP}/${TOTAL_STEPS}"; fi
+  printf '\n  %s%s%s\n' "$CYAN" "$__RULE" "$RESET"
+  printf '  %s%s%s  %s%s%s\n' "$BOLD" "$WHITE" "$n" "$RESET$BOLD" "$1" "$RESET"
+  printf '  %s%s%s\n' "$CYAN" "$__RULE" "$RESET"
+}
 ok()   { printf '    %s✔%s  %s\n' "$GREEN" "$RESET" "$1"; }
 warn() { printf '    %s⚠%s  %s\n' "$YELLOW" "$RESET" "$1"; }
 note() { printf '    %s%s%s\n' "$DIM" "$1" "$RESET"; }
