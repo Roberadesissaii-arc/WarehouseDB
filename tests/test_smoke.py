@@ -25,7 +25,10 @@ class AppSmokeTests(unittest.TestCase):
             from app.models import user
 
             if user.needs_setup():
-                user.create_owner("admin", "admin1234")
+                user.create_owner(
+                    "admin", "admin1234",
+                    first_name="Admin", last_name="User", email="admin@example.com",
+                )
 
     def setUp(self):
         self.client = self.app.test_client()

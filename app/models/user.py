@@ -17,20 +17,29 @@ def needs_setup() -> bool:
     return get_db().execute("SELECT COUNT(*) c FROM users").fetchone()["c"] == 0
 
 
-def create_owner(username: str, password: str):
+def create_owner(username, password, *, first_name="", last_name="", email=""):
     """Create the sole warehouse account (first run only)."""
     from ..security import validate_password
 
     if not needs_setup():
         raise ValueError("An account already exists for this warehouse.")
+    first_name = (first_name or "").strip()
+    last_name = (last_name or "").strip()
+    email = (email or "").strip()
     username = (username or "").strip()
+    if not first_name:
+        raise ValueError("First name is required")
+    if not last_name:
+        raise ValueError("Last name is required")
     if not username:
         raise ValueError("Username is required")
+    if "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+        raise ValueError("A valid email address is required")
     validate_password(password)
     db = get_db()
     db.execute(
-        "INSERT INTO users(username, password_hash) VALUES(?,?)",
-        (username, generate_password_hash(password)),
+        "INSERT INTO users(username, password_hash, first_name, last_name, email) VALUES(?,?,?,?,?)",
+        (username, generate_password_hash(password), first_name, last_name, email),
     )
     db.commit()
     return get_by_username(username)

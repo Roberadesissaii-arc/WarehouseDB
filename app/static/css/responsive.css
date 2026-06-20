@@ -72,6 +72,8 @@
       max(18px, env(safe-area-inset-left, 0px));
   }
   .login-card { padding: 26px 22px; }
+  /* stack first/last name as full-width fields on phones */
+  .login-name-row { display: contents; }
 }
 @media (max-width: 600px) {
   .title-block h1 { font-size: 24px; }

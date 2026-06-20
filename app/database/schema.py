@@ -61,6 +61,9 @@ CREATE TABLE IF NOT EXISTS users (
     id            INTEGER PRIMARY KEY AUTOINCREMENT,
     username      TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    first_name    TEXT NOT NULL DEFAULT '',
+    last_name     TEXT NOT NULL DEFAULT '',
+    email         TEXT NOT NULL DEFAULT '',
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE TABLE IF NOT EXISTS settings (
@@ -135,6 +138,16 @@ def _migrate_home_bays(db):
                 "UPDATE robots SET home_bay_id=? WHERE id=?",
                 (bays[i % len(bays)]["id"], row["id"]),
             )
+
+
+def _migrate_users(db):
+    cols = {row[1] for row in db.execute("PRAGMA table_info(users)").fetchall()}
+    if "first_name" not in cols:
+        db.execute("ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT ''")
+    if "last_name" not in cols:
+        db.execute("ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''")
+    if "email" not in cols:
+        db.execute("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''")
 
 
 def _migrate_robots(db):
@@ -258,6 +271,7 @@ def init_schema():
     db = get_db()
     db.executescript(SCHEMA)
     _migrate_home_bays(db)
+    _migrate_users(db)
     _migrate_robots(db)
     _migrate_tasks(db)
     _migrate_items(db)

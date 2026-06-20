@@ -224,3 +224,26 @@ install_systemd() {
   sudo systemctl enable --now "$name"
   ok "Service $name enabled — starts now and on every boot"
 }
+
+# Open a TCP port in ufw — but only if ufw is installed AND active, so we never
+# turn on a firewall the user isn't using or touch a different firewall setup.
+open_firewall_port() {
+  local port=$1 label="${2:-app}"
+  if ! command -v ufw >/dev/null 2>&1; then
+    note "ufw not installed — skipping firewall (open port ${port}/tcp on your firewall if needed)"
+    return 0
+  fi
+  if ! sudo ufw status 2>/dev/null | grep -q '^Status: active'; then
+    note "ufw is inactive — nothing blocking port ${port}; not enabling the firewall"
+    return 0
+  fi
+  if sudo ufw status 2>/dev/null | grep -qE "^${port}/tcp[[:space:]]"; then
+    ok "Firewall already allows ${port}/tcp"
+    return 0
+  fi
+  if sudo ufw allow "${port}/tcp" comment "$label" >/dev/null 2>&1; then
+    ok "Opened firewall port ${port}/tcp ($label)"
+  else
+    warn "Could not open ${port}/tcp in ufw — run: sudo ufw allow ${port}/tcp"
+  fi
+}

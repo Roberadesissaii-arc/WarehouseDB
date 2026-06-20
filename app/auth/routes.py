@@ -13,10 +13,22 @@ def login():
         username = (request.form.get("username") or "").strip()
         password = request.form.get("password") or ""
         if needs_setup:
+            first_name = (request.form.get("first_name") or "").strip()
+            last_name = (request.form.get("last_name") or "").strip()
+            email = (request.form.get("email") or "").strip()
+            confirm = request.form.get("confirm_password") or ""
+            setup_values = dict(
+                username=username, first_name=first_name, last_name=last_name,
+                email=email, needs_setup=True,
+            )
+            if password != confirm:
+                return render_template("login.html", error="The two passwords do not match.", **setup_values)
             try:
-                row = user.create_owner(username, password)
+                row = user.create_owner(
+                    username, password, first_name=first_name, last_name=last_name, email=email
+                )
             except ValueError as exc:
-                return render_template("login.html", error=str(exc), username=username, needs_setup=True)
+                return render_template("login.html", error=str(exc), **setup_values)
             clear_login_attempts(username)
             session.clear()
             session.permanent = True

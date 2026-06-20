@@ -10,8 +10,20 @@
       <p class="sub">{% if needs_setup %}/// create your warehouse account{% else %}/// sign in to continue{% endif %}</p>
     </div>
     <form class="form login-form" method="post" action="{{ url_for('auth.login') }}">
-      <label>USERNAME<input name="username" value="{{ username or '' }}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus required /></label>
+      {% if needs_setup %}
+      <div class="login-name-row">
+        <label>FIRST NAME<input name="first_name" value="{{ first_name or '' }}" autocomplete="given-name" autocapitalize="words" autofocus required /></label>
+        <label>LAST NAME<input name="last_name" value="{{ last_name or '' }}" autocomplete="family-name" autocapitalize="words" required /></label>
+      </div>
+      {% endif %}
+      <label>USERNAME<input name="username" value="{{ username or '' }}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" {% if not needs_setup %}autofocus{% endif %} required /></label>
+      {% if needs_setup %}
+      <label>EMAIL<input name="email" type="email" value="{{ email or '' }}" autocomplete="email" autocapitalize="off" autocorrect="off" spellcheck="false" required /></label>
+      {% endif %}
       <label>PASSWORD<input name="password" type="password" autocomplete="{% if needs_setup %}new-password{% else %}current-password{% endif %}" required /></label>
+      {% if needs_setup %}
+      <label>CONFIRM PASSWORD<input name="confirm_password" type="password" autocomplete="new-password" required /></label>
+      {% endif %}
       <button type="submit" class="btn btn-yellow login-submit">{% if needs_setup %}CREATE ACCOUNT →{% else %}SIGN IN →{% endif %}</button>
     </form>
     <p class="login-hint">

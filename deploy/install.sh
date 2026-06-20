@@ -40,7 +40,7 @@ done
 
 trap stop_sudo_keepalive EXIT
 
-TOTAL_STEPS=6
+TOTAL_STEPS=7
 if [ -t 1 ]; then clear 2>/dev/null || true; fi
 printf '\n  %sW A R E H O U S E%s\n%s' "$DIM" "$RESET" "$GREEN"
 cat <<'ART'
@@ -86,6 +86,7 @@ if $USE_DOCKER; then
   sudo docker compose up -d --build
   echo
   ok "WarehouseDB running (Docker) — http://127.0.0.1:${CHOSEN_PORT}"
+  open_firewall_port "$CHOSEN_PORT" "WarehouseDB"
   note "logs: docker compose logs -f warehouse"
   note "tunnel: see deploy/CLOUDFLARE-TUNNEL.md"
   exit 0
@@ -155,6 +156,9 @@ else
   note "  set -a; . instance/warehousedb.env; set +a"
   note "  .venv/bin/waitress-serve --host \$HOST --port \$PORT wsgi:app"
 fi
+
+step "Firewall"
+open_firewall_port "$CHOSEN_PORT" "WarehouseDB"
 
 STORE_API_KEY_VAL="$(grep '^STORE_API_KEY=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
 SCAN_API_KEY_VAL="$(grep '^SCAN_API_KEY=' "$ENV_FILE" 2>/dev/null | cut -d= -f2- || true)"
