@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Task — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app detail-page task-page" data-task-id="{{ task_id }}">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1 id="task-page-title"><svg class="ic ic-lg"><use href="#i-tasks"/></svg> TASK</h1>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_tasks') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <section class="panel task-page-panel">
+    <h2 id="task-title">Edit task</h2>
+    <p class="panel-note task-modal-note" id="task-assign-hint">Pick action → item → destination. Charging is on the robot page.</p>
+    <form id="task-form" class="form task-form">
+      <div class="add-task-grid add-task-grid--compact">
+        <label class="grid-span-full">ROBOT
+          <select name="robot_id" id="task-robot" required></select>
+          <span class="field-hint" id="task-robot-hint"></span>
+        </label>
+        <label>ACTION
+          <select name="action" id="task-action">
+            <option value="pick">PICK</option>
+            <option value="restock">RESTOCK</option>
+            <option value="move">MOVE</option>
+            <option value="inspect">INSPECT</option>
+          </select>
+          <span class="field-hint" id="task-action-hint"></span>
+        </label>
+        <label id="task-item-wrap"><span id="task-item-label">ITEM</span>
+          <div id="task-item-mount"></div>
+        </label>
+        <label id="task-section-wrap"><span id="task-section-label">WHERE TO GO</span>
+          <div id="task-section-mount"></div>
+          <span class="field-hint hidden" id="task-from-hint"></span>
+        </label>
+        <label id="task-qty-wrap">HOW MANY
+          <input type="number" name="quantity" id="task-qty" class="qty-input" min="1" value="1" inputmode="numeric" required />
+          <span class="field-hint" id="task-qty-hint"></span>
+        </label>
+        <label class="grid-span-full">TAG
+          <div class="task-tag-field" id="task-tag-field">
+            <div class="task-tag-chips"></div>
+            <input type="text" class="task-tag-type" placeholder="e.g. fragile — press Enter to add" autocomplete="off" aria-label="Task tag" />
+            <input type="hidden" name="note" />
+          </div>
+          <span class="field-hint">Add one or more labels — press Enter after each</span>
+        </label>
+      </div>
+      <div id="task-status-display" class="hidden">
+        <div class="task-status-row">
+          <span class="task-status-label">STATUS</span>
+          <span id="task-status-badge" class="task-status"></span>
+        </div>
+        <span class="field-hint">Updates automatically when the robot works on this task</span>
+      </div>
+      <div class="form-actions task-page-actions">
+        <button type="button" class="btn btn-ghost hidden" id="cancel-task">CANCEL TASK</button>
+        <button type="button" class="btn btn-ghost hidden" id="delete-task">DELETE</button>
+        <button type="submit" class="btn btn-yellow">SAVE</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirm-title">CONFIRM</h2>
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-no">CANCEL</button>
+      <button type="button" class="btn btn-yellow" id="confirm-yes">CONFIRM</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/taskPage.js') }}"></script>
+{% endblock %}

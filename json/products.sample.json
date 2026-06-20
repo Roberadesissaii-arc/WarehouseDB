@@ -1,0 +1,78 @@
+{
+  "import_version": 1,
+  "description": "EXAMPLE ONLY — not loaded into the database automatically. Use Settings → Data → Import JSON when you want to add these products to warehouses you already created.",
+  "products": [
+    {
+      "name": "Lidar Module",
+      "sku": "ELC-001",
+      "quantity": 6,
+      "age_days": 4,
+      "warehouse": "Central Distribution",
+      "aisle": "Electronics",
+      "bay": "EL-01"
+    },
+    {
+      "name": "Gripper Claw v3",
+      "sku": "ELC-002",
+      "quantity": 3,
+      "age_days": 12,
+      "warehouse": "Central Distribution",
+      "aisle": "Electronics",
+      "bay": "EL-02"
+    },
+    {
+      "name": "M6 Hex Bolt 100pk",
+      "sku": "SPT-010",
+      "quantity": 24,
+      "age_days": 45,
+      "warehouse": "Central Distribution",
+      "aisle": "Small Parts",
+      "bay": "SP-01"
+    },
+    {
+      "name": "Cable Ties 200mm",
+      "sku": "SPT-011",
+      "quantity": 18,
+      "age_days": 21,
+      "warehouse": "Central Distribution",
+      "aisle": "Small Parts",
+      "bay": "SP-02"
+    },
+    {
+      "name": "Frozen Peas 1kg",
+      "sku": "FRZ-100",
+      "quantity": 40,
+      "age_days": 2,
+      "warehouse": "Cold Chain Facility",
+      "aisle": "Frozen Vault",
+      "bay": "FZ-01"
+    },
+    {
+      "name": "Milk 2L",
+      "sku": "DRY-201",
+      "quantity": 30,
+      "age_days": 1,
+      "warehouse": "Cold Chain Facility",
+      "aisle": "Dairy & Produce",
+      "bay": "DP-01"
+    },
+    {
+      "name": "Cement Bag 25kg",
+      "sku": "PRA-050",
+      "quantity": 12,
+      "age_days": 90,
+      "warehouse": "Bulk & Pallet Yard",
+      "aisle": "Pallet Racking A",
+      "bay": "PA-01"
+    },
+    {
+      "name": "Returned Tablet",
+      "sku": "RET-301",
+      "quantity": 2,
+      "age_days": 7,
+      "warehouse": "Returns & Spares",
+      "aisle": "Inbound Returns",
+      "bay": "IR-01"
+    }
+  ]
+}

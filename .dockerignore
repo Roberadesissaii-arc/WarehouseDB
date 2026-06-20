@@ -1,0 +1,30 @@
+# Python / local runtime
+**/.venv/
+**/venv/
+**/env/
+**/__pycache__/
+**/*.py[cod]
+**/instance/
+**/*.db
+
+# Git / editor
+.git/
+.claude/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Docs / dev-only (not needed in image)
+**/tests/
+**/*.md
+!WarehouseDB/scripts/README.md
+
+# Firmware (flash separately; keeps image small)
+WarehouseDB/Arduino/
+
+# Env files — inject at runtime
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.local.example

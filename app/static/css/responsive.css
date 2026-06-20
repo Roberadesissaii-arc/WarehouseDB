@@ -1,0 +1,313 @@
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+  .app {
+    padding:
+      max(20px, env(safe-area-inset-top, 0px))
+      max(18px, env(safe-area-inset-right, 0px))
+      max(70px, env(safe-area-inset-bottom, 0px))
+      max(18px, env(safe-area-inset-left, 0px));
+  }
+  .masthead { flex-wrap: wrap; }
+  .search-wrap { order: 3; max-width: none; width: 100%; margin-left: 0; }
+  .masthead-actions { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; }
+  /* detail pages on tablet/mobile: title + BACK on row 1; account + alerts on row 2 */
+  .masthead--detail {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "title back"
+      "nav nav";
+    row-gap: 14px;
+    column-gap: 12px;
+    align-items: start;
+  }
+  .masthead--detail .title-block {
+    grid-area: title;
+    flex: unset;
+    padding-right: 0;
+  }
+  .masthead--detail .masthead-back {
+    grid-area: back;
+    align-self: start;
+    justify-self: end;
+  }
+  .masthead--detail > .masthead-actions {
+    grid-area: nav;
+    width: 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-end;
+    padding-top: 2px;
+  }
+  /* detail masthead: title + BACK + account + alerts only — no subtitle line */
+  .masthead--detail .title-block .sub {
+    display: none;
+  }
+  .settings-grid { grid-template-columns: 1fr; gap: 16px; }
+  .panel { padding: 18px 16px; }
+  .add-row { flex-direction: column; align-items: stretch; }
+  .add-row .btn { width: 100%; justify-content: center; }
+  .data-actions-row { flex-direction: column; }
+  .data-actions-row .btn { flex: 1 1 auto; width: 100%; }
+}
+@media (max-width: 767px) {
+  /* 16px+ inputs prevent iOS Safari zoom-on-focus */
+  .form input,
+  .form select,
+  .form textarea,
+  .search-wrap input,
+  .qty-input,
+  .sec-ip-list,
+  .login-form input {
+    font-size: 16px;
+  }
+}
+/* Login on phones: full-width card, safe-area aware, with right/bottom padding
+   offset by the 8px drop shadow so margins read evenly (native feel). */
+@media (max-width: 560px) {
+  .login-screen {
+    padding:
+      max(26px, env(safe-area-inset-top, 0px))
+      max(26px, env(safe-area-inset-right, 0px))
+      max(28px, env(safe-area-inset-bottom, 0px))
+      max(18px, env(safe-area-inset-left, 0px));
+  }
+  .login-card { padding: 26px 22px; }
+}
+@media (max-width: 600px) {
+  .title-block h1 { font-size: 24px; }
+  .masthead { gap: 14px; padding: 16px; }
+  /* actions wrap: GUIDE + account + alerts share a row */
+  .masthead-actions { width: 100%; flex-wrap: wrap; }
+  .masthead-actions > .account, .masthead-actions > .notif-wrap { flex: 1 1 0; }
+  .masthead-actions > .account .account-btn, .masthead-actions > .notif-wrap .notif-btn { width: 100%; }
+  /* detail pages: title + BACK on row 1; account + alerts on row 2 with clear gap */
+  .masthead--detail { padding: 16px; row-gap: 12px; column-gap: 10px; }
+  .masthead--detail .title-block { padding-right: 0; }
+  .masthead--detail > .masthead-actions { width: 100%; flex-wrap: nowrap; justify-content: flex-end; padding-top: 0; }
+  .masthead--detail > .masthead-actions > .account,
+  .masthead--detail > .masthead-actions > .notif-wrap { flex: 0 0 auto; }
+  .masthead--detail > .masthead-actions > .account .account-btn,
+  .masthead--detail > .masthead-actions > .notif-wrap .notif-btn { width: auto; }
+  .fleet-alert-stack { right: 12px; bottom: 12px; max-width: calc(100vw - 24px); }
+  /* counters: stack number over label, three per row */
+  .counters { gap: 8px; }
+  .counter { flex: 1 1 calc(33.33% - 8px); min-width: 0; flex-direction: column; align-items: flex-start; gap: 1px; padding: 9px 11px; }
+  .counter .n { font-size: 19px; }
+  .counter .l { font-size: 9px; }
+  .deck { padding: 14px; }
+  .deck-line { flex-direction: column; gap: 8px; }
+  .deck-label { width: auto; padding-top: 0; }
+  .board { grid-template-columns: 1fr; }
+  .map-floor { grid-template-columns: 1fr; }
+  .map-floor-grid { grid-template-columns: 1fr; padding: 14px; }
+  .home-dock-grid { grid-template-columns: 1fr; }
+  .map-toolbar { flex-direction: column; align-items: flex-start; }
+  .map-stats { width: 100%; }
+  .doc-toc ol { columns: 1; }
+  .bin { width: 84px; min-height: 68px; }
+  .skel-bin { width: 84px; min-height: 68px; }
+  .skel-chip-add-bin { min-height: 68px; width: 76px; }
+  .counter--skel .skel-counter-n { height: 19px; }
+  .counter--skel .skel-counter-l { height: 9px; }
+  .modal {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: max(16px, env(safe-area-inset-top, 0px)) 12px max(16px, env(safe-area-inset-bottom, 0px));
+  }
+  .modal-card {
+    width: 100%;
+    max-width: 100%;
+    flex-shrink: 0;
+    margin: auto 0;
+    padding: 20px;
+  }
+  .modal-card .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .modal-card .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .view-tabs { flex-wrap: wrap; }
+  /* staff guide — keep hierarchy chips readable on phones */
+  .doc-block {
+    padding: 16px 14px;
+    min-width: 0;
+  }
+  .doc-block pre {
+    font-size: 11px;
+    padding: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    overflow-x: auto;
+  }
+  .firmware-banner {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .robot-page .panel-note,
+  .robot-page .field-hint {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .map-zone-head {
+    flex-wrap: wrap;
+    gap: 4px 8px;
+  }
+  .map-zone-head span,
+  .map-zone-head em {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+}
+
+
+/* detail pages stack on small screens */
+@media (max-width: 760px) {
+  .detail-grid, .robot-grid { grid-template-columns: 1fr; }
+  .detail-extra { min-width: 0; }
+  .panel-qr .qr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+
+/* settings: nav scrolls horizontally; content stacks on small screens */
+@media (max-width: 760px) {
+  .settings-shell { flex-direction: column; gap: 14px; margin-top: 16px; }
+  .settings-nav {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    position: static;
+    gap: 8px;
+    padding: 12px;
+    scrollbar-width: none;
+  }
+  .settings-nav::-webkit-scrollbar { display: none; }
+  .settings-nav .snav {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    justify-content: center;
+    font-size: 12px;
+    padding: 10px 12px;
+  }
+  .settings-content { width: 100%; }
+  .org-overview { grid-template-columns: 1fr; }
+  .notif-settings-grid { grid-template-columns: 1fr; }
+  .security-grid { grid-template-columns: 1fr; }
+  .form-actions,
+  .form-actions-pair { flex-direction: column; align-items: stretch; }
+  .form-actions .btn,
+  .form-actions-pair .btn { width: 100%; justify-content: center; }
+  /* item edit — SKU input full width, generate button stacked below on mobile */
+  .item-edit-form .sku-field-stack {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .item-edit-form .sku-field-stack .sku-generate-btn {
+    width: 100%;
+    max-width: none;
+  }
+  .item-edit-form .field-name-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .item-edit-form .field-name-row .btn {
+    width: 100%;
+    max-width: none;
+  }
+  .firmware-actions {
+    flex-direction: column;
+  }
+  .firmware-actions .btn {
+    width: 100%;
+  }
+}
+
+
+@media (max-width: 1200px) {
+  .detail-extra { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .detail-extra .panel-qr { grid-column: 1 / -1; }
+  .panel-qr .qr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* item page bottom row stacks on small screens */
+@media (max-width: 760px) {
+  .detail-extra { grid-template-columns: 1fr; }
+  .panel-qr .qr-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mini-name { white-space: normal; }
+}
+@media (max-width: 480px) {
+  .panel-qr .qr-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 760px) { .add-task-grid { grid-template-columns: 1fr; } }
+@media (max-width: 1023px) {
+  .robot-grid .tasks-panel .add-task-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 599px) {
+  .robot-grid .tasks-panel .add-task-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 900px) {
+  .security-grid { grid-template-columns: 1fr; }
+  .notif-settings-grid { grid-template-columns: 1fr; }
+  .security-status-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .security-field-row { grid-template-columns: 1fr; }
+  .sys-host-grid { grid-template-columns: 1fr; }
+  .system-head { flex-direction: column; align-items: stretch; }
+  .org-overview { grid-template-columns: 1fr; }
+  .integration-overview { grid-template-columns: 1fr; }
+  .relay-overview { grid-template-columns: 1fr; }
+  .integration-panel .api-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-areas:
+      "method path auth"
+      "desc desc desc";
+  }
+  .integration-panel .api-m { grid-area: method; }
+  .integration-panel .api-path { grid-area: path; }
+  .integration-panel .api-auth { grid-area: auth; }
+  .integration-panel .api-d { grid-area: desc; }
+}
+
+/* robot page — assigned tasks stack on tablet/mobile */
+@media (max-width: 900px) {
+  .task-row { flex-wrap: wrap; align-items: flex-start; }
+  .task-row-main { flex: 1 1 100%; min-width: 0; }
+  .task-row-main .task-dest { display: block; margin-top: 4px; word-break: break-word; }
+  .task-row-badges { margin-top: 6px; }
+  .task-row-actions { flex: 1 1 100%; justify-content: flex-end; }
+  .task-status-sel { flex: 1; min-width: 0; max-width: none; }
+  .field-name-row { flex-wrap: wrap; }
+  .field-name-row .btn { flex: 1 1 auto; justify-content: center; }
+  .charge-row { flex-direction: column; align-items: stretch; }
+  .charge-btn-wrap { justify-content: stretch; }
+  .charge-btn-wrap .btn { width: 100%; justify-content: center; }
+}
+
+@media (max-width: 640px) {
+  .unit-picker-grid--pair {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .unit-picker-grid--pair .unit-pick {
+    padding: 10px 8px;
+  }
+  .unit-picker-grid--pair .unit-pick-img {
+    width: 100%;
+    height: 88px;
+    max-width: none;
+  }
+  .unit-picker-grid--pair .unit-pick-brand {
+    font-size: 11px;
+  }
+  .unit-picker-grid--pair .unit-pick-code {
+    font-size: 9px;
+  }
+}

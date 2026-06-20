@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}{% if needs_setup %}Set up{% else %}Sign in{% endif %} — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="login-screen">
+  <div class="login-card">
+    {% if error %}<div class="login-error" role="alert">{{ error }}</div>{% endif %}
+    <div class="login-brand">
+      <h1>WAREHOUSE<span>DB</span></h1>
+      <p class="sub">{% if needs_setup %}/// create your warehouse account{% else %}/// sign in to continue{% endif %}</p>
+    </div>
+    <form class="form login-form" method="post" action="{{ url_for('auth.login') }}">
+      <label>USERNAME<input name="username" value="{{ username or '' }}" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" autofocus required /></label>
+      <label>PASSWORD<input name="password" type="password" autocomplete="{% if needs_setup %}new-password{% else %}current-password{% endif %}" required /></label>
+      <button type="submit" class="btn btn-yellow login-submit">{% if needs_setup %}CREATE ACCOUNT →{% else %}SIGN IN →{% endif %}</button>
+    </form>
+    <p class="login-hint">
+      {% if needs_setup %}
+      First run — create the one account for this warehouse server. Passwords need 8+ characters with a letter and a number.
+      {% else %}
+      Your personal warehouse brain — inventory, robots, and tasks. Warehouse Store and Warehouse Scan connect here over the API.
+      {% endif %}
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  (function () {
+    const form = document.querySelector(".login-form");
+    const btn = form?.querySelector(".login-submit");
+    if (!form || !btn) return;
+    const defaultLabel = btn.textContent.trim();
+
+    function resetButton() {
+      btn.disabled = false;
+      btn.textContent = defaultLabel;
+    }
+
+    form.addEventListener("submit", () => {
+      btn.disabled = true;
+      btn.textContent = defaultLabel.includes("CREATE") ? "CREATING…" : "SIGNING IN…";
+    });
+
+    window.addEventListener("pageshow", resetButton);
+    resetButton();
+  })();
+</script>
+{% endblock %}

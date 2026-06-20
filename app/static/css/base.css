@@ -1,0 +1,43 @@
+:root {
+  --ink: #15130f;
+  --paper: #ece7dc;
+  --paper-2: #e2dccd;
+  --card: #fbf9f3;
+  --yellow: #ffd400;
+  --orange: #ff5b1a;
+  --green: #1f9d55;
+  --line: #15130f;
+  /* robot status colors (overridden at runtime from Settings) */
+  --st-working: #1f9d55;
+  --st-idle: #ffd400;
+  --st-charging: #ff5b1a;
+  --st-offline: #b8b2a5;
+  --shadow: 5px 5px 0 var(--ink);
+  --shadow-sm: 3px 3px 0 var(--ink);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+
+body {
+  font-family: "Archivo", system-ui, sans-serif;
+  color: var(--ink);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 38px, rgba(21,19,15,.04) 38px 39px),
+    repeating-linear-gradient(90deg, transparent 0 38px, rgba(21,19,15,.04) 38px 39px),
+    var(--paper);
+  overflow-y: scroll;
+}
+
+.app {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding:
+    max(26px, env(safe-area-inset-top, 0px))
+    max(32px, env(safe-area-inset-right, 0px))
+    max(80px, env(safe-area-inset-bottom, 0px))
+    max(32px, env(safe-area-inset-left, 0px));
+}
+.masthead-actions { display: flex; gap: 10px; align-items: center; }
+button, .btn { touch-action: manipulation; }

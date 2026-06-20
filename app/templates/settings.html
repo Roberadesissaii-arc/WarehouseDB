@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% block title %}Settings — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app settings-page">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1>SETTINGS<span>·</span></h1>
+      <p class="sub">{% if org_name %}{{ org_name }}{% else %}/// configure your workspace{% endif %}</p>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_items') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <div class="settings-shell">
+    <nav class="settings-nav">
+      <button class="snav active" data-sec="general"><svg class="ic"><use href="#i-setting"/></svg> General</button>
+      <button class="snav" data-sec="account"><svg class="ic"><use href="#i-account"/></svg> Account</button>
+      <button class="snav" data-sec="appearance"><svg class="ic"><use href="#i-appearance"/></svg> Appearance</button>
+      <button class="snav" data-sec="notifications"><svg class="ic"><use href="#i-bell"/></svg> Notifications</button>
+      <button class="snav" data-sec="fleet"><svg class="ic"><use href="#i-robot"/></svg> Fleet</button>
+      <button class="snav" data-sec="locations"><svg class="ic"><use href="#i-pin"/></svg> Locations</button>
+      <button class="snav" data-sec="data"><svg class="ic"><use href="#i-items"/></svg> Data</button>
+      <button class="snav" data-sec="storage"><svg class="ic"><use href="#i-data"/></svg> Storage</button>
+      <button class="snav" data-sec="security"><svg class="ic"><use href="#i-shield"/></svg> Security</button>
+      <button class="snav" data-sec="system"><svg class="ic"><use href="#i-system"/></svg> System</button>
+      <button class="snav" data-sec="integration"><svg class="ic"><use href="#i-integration"/></svg> Integration</button>
+    </nav>
+
+    <div class="settings-content">
+      <!-- General -->
+      <section class="sset" data-sec="general">
+        <div class="panel org-panel">
+          <h2>Organization</h2>
+          <p class="panel-note org-lead">The organization name is shown in the header across the app — under the logo on the board, settings, and guide.</p>
+
+          <div id="org-overview" class="org-overview sys-loading">Loading…</div>
+
+          <div class="org-preview-card" aria-hidden="true">
+            <span class="org-preview-lbl">Header preview</span>
+            <div class="org-preview-mast">
+              <strong class="org-preview-logo">WAREHOUSE<span>DB</span></strong>
+              <p class="org-preview-sub" id="org-preview-sub">North Depot Co.</p>
+            </div>
+          </div>
+
+          <form id="org-form" class="org-form">
+            <div class="org-card">
+              <h3 class="org-card-title">Organization name</h3>
+              <p class="org-card-note">Saved to the server database. Included in JSON backups. Leave blank to use the default subtitle on the board.</p>
+              <label>ORGANIZATION NAME
+                <input name="org_name" id="org-name" maxlength="120" placeholder="e.g. North Depot Co." autocomplete="organization" />
+              </label>
+              <div class="org-field-meta">
+                <span id="org-char-count">0 / 120</span>
+                <span id="org-updated-at"></span>
+              </div>
+              <div class="form-actions">
+                <button class="btn btn-yellow" type="submit">SAVE ORGANIZATION</button>
+              </div>
+            </div>
+          </form>
+
+          <div class="org-where">
+            <h3 class="org-sub">Shown on</h3>
+            <ul class="org-where-list" id="org-where-list"></ul>
+          </div>
+        </div>
+      </section>
+
+      <!-- Account -->
+      <section class="sset hidden" data-sec="account">
+        <div class="panel">
+          <h2>Account &amp; password</h2>
+          <p class="panel-note">Change your login. Your current password is required to make changes.</p>
+          <form id="account-form" class="form">
+            <label>USERNAME<input name="username" id="acc-username" value="{{ current_user }}" required /></label>
+            <label>CURRENT PASSWORD<input name="current_password" type="password" autocomplete="current-password" required /></label>
+            <label>NEW PASSWORD<input name="new_password" id="acc-new-password" type="password" placeholder="leave blank to keep" autocomplete="new-password" />
+              <span class="field-hint">8+ characters with a letter and a number. Leave blank to keep your current password.</span>
+            </label>
+            <label>CONFIRM NEW PASSWORD<input name="confirm_password" id="acc-confirm-password" type="password" placeholder="re-enter new password" autocomplete="new-password" />
+              <span class="field-hint">Required when setting a new password — must match exactly.</span>
+            </label>
+            <div class="form-actions"><button class="btn btn-yellow" type="submit">UPDATE ACCOUNT</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Appearance -->
+      <section class="sset hidden" data-sec="appearance">
+        <div class="panel">
+          <h2>Robot status labels</h2>
+          <p class="panel-note">Rename and recolor the six live robot statuses. Offline appears automatically when a robot stops polling.</p>
+          <form id="status-form" class="form">
+            <div id="status-rows"></div>
+            <div class="form-actions"><button class="btn btn-yellow" type="submit">SAVE STATUSES</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Notifications -->
+      <section class="sset hidden" data-sec="notifications">
+        <div class="panel notif-settings-panel">
+          <h2>Notifications</h2>
+          <p class="panel-note">How new alerts (fleet, store orders, system) reach you on this device.</p>
+          <form id="notif-form" class="form notif-settings-form">
+            <div class="notif-settings-grid">
+              <section class="notif-settings-card">
+                <h3 class="notif-settings-title">Sound</h3>
+                <p class="notif-settings-note">Plays a tone when a new alert arrives in the feed.</p>
+                <div class="notif-toggle-row">
+                  <span class="toggle-name">Play a sound</span>
+                  <label class="switch"><input type="checkbox" id="notif-sound" /><span class="slider"></span></label>
+                </div>
+                <label class="notif-field">
+                  <span class="notif-field-label">Alert sound</span>
+                  <div class="sound-pick">
+                    <select id="notif-sound-kind">
+                      <option value="chime">Chime</option>
+                      <option value="beep">Beep</option>
+                      <option value="ding">Ding</option>
+                      <option value="alert">Alert</option>
+                    </select>
+                    <button type="button" class="btn btn-line" id="notif-test"><svg class="ic"><use href="#i-bell"/></svg> TEST</button>
+                  </div>
+                </label>
+                <label class="notif-field">
+                  <span class="notif-field-label">Volume</span>
+                  <input type="range" id="notif-volume" min="0" max="100" value="70" class="range-input" />
+                  <span class="field-hint"><span id="notif-volume-val">70</span>%</span>
+                </label>
+              </section>
+
+              <section class="notif-settings-card">
+                <h3 class="notif-settings-title">Desktop</h3>
+                <p class="notif-settings-note">System pop-up on a computer when WarehouseDB is open (the tab can be in the background).</p>
+                <p class="notif-perm-status" id="notif-desktop-status" role="status">Checking browser permission…</p>
+                <div class="notif-toggle-row">
+                  <span class="toggle-name">Desktop notifications</span>
+                  <label class="switch"><input type="checkbox" id="notif-desktop" /><span class="slider"></span></label>
+                </div>
+                <div class="notif-push-actions">
+                  <button type="button" class="btn btn-line" id="notif-desktop-enable"><svg class="ic"><use href="#i-bell"/></svg> ALLOW ON THIS COMPUTER</button>
+                  <button type="button" class="btn btn-line" id="notif-desktop-test">TEST</button>
+                </div>
+              </section>
+
+              <section class="notif-settings-card">
+                <h3 class="notif-settings-title">Phone</h3>
+                <p class="notif-settings-note">Notification on your phone when WarehouseDB is open in the browser. On iPhone, add WarehouseDB to your home screen first, then enable here.</p>
+                <p class="notif-perm-status" id="notif-mobile-status" role="status">Checking browser permission…</p>
+                <div class="notif-toggle-row">
+                  <span class="toggle-name">Mobile notifications</span>
+                  <label class="switch"><input type="checkbox" id="notif-mobile" /><span class="slider"></span></label>
+                </div>
+                <div class="notif-push-actions">
+                  <button type="button" class="btn btn-line" id="notif-mobile-enable"><svg class="ic"><use href="#i-bell"/></svg> ALLOW ON THIS PHONE</button>
+                  <button type="button" class="btn btn-line" id="notif-mobile-test">TEST</button>
+                </div>
+              </section>
+
+              <section class="notif-settings-card notif-settings-card-wide">
+                <h3 class="notif-settings-title">Alert me for</h3>
+                <p class="notif-settings-note">Choose which alert types can trigger sound and browser notifications on each device.</p>
+                <div class="notif-kind-list">
+                  <label class="notif-kind-row">
+                    <input type="checkbox" class="notif-kind-check" data-kind="fleet" />
+                    <span class="notif-kind-copy">
+                      <strong>Fleet</strong>
+                      <small>Robot offline, pairing, and charging</small>
+                    </span>
+                  </label>
+                  <label class="notif-kind-row">
+                    <input type="checkbox" class="notif-kind-check" data-kind="store" />
+                    <span class="notif-kind-copy">
+                      <strong>Pick requests</strong>
+                      <small>New requests from your garage inventory shop</small>
+                    </span>
+                  </label>
+                  <label class="notif-kind-row">
+                    <input type="checkbox" class="notif-kind-check" data-kind="system" />
+                    <span class="notif-kind-copy">
+                      <strong>System</strong>
+                      <small>Imports, resets, and maintenance</small>
+                    </span>
+                  </label>
+                </div>
+              </section>
+            </div>
+            <div class="form-actions"><button class="btn btn-yellow" type="submit">SAVE NOTIFICATIONS</button></div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Fleet -->
+      <section class="sset hidden" data-sec="fleet">
+        <div class="panel">
+          <h2>Robot home warehouse</h2>
+          <p class="panel-note">Name the facility where robots dock when idle or charging. Four bases are created by default — add more as needed.</p>
+          <form id="home-wh-form" class="form">
+            <label>HOME WAREHOUSE NAME<input name="name" id="home-wh-name" placeholder="e.g. Robot Home" required /></label>
+            <div class="form-actions"><button class="btn btn-yellow" type="submit">SAVE NAME</button></div>
+          </form>
+          <div id="home-bay-list" class="home-bay-admin"></div>
+          <form id="add-home-bay-form" class="form add-inline">
+            <h3 class="sub-h">Add a home base</h3>
+            <div class="add-row">
+              <input name="name" id="home-bay-new-name" placeholder="Base name, e.g. Base 05" required />
+              <button type="submit" class="btn btn-yellow"><svg class="ic"><use href="#i-plus"/></svg> ADD</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Task assignment</h2>
+          <p class="panel-note">Controls whether a newly paired robot can pick up store orders that were already waiting before it joined the fleet.</p>
+          <form id="fleet-assign-form" class="form">
+            <label class="fleet-assign-toggle">
+              <input type="checkbox" id="fleet-assign-backlog" />
+              <span>Assign waiting store picks when a new robot pairs</span>
+            </label>
+            <p class="panel-note">Off by default — new robots only take orders placed after they pair. Older waiting picks stay for staff on Scan or manual assignment in Tasks. Turn this on if you want a new robot to load the backlog as soon as it connects.</p>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-yellow">SAVE</button>
+            </div>
+          </form>
+        </div>
+        <div class="panel">
+          <h2>Fleet</h2>
+          <p class="panel-note">Every robot in the system. Click one to open its page; register a new one below.</p>
+          <div id="fleet-list" class="sys-loading">Loading…</div>
+          <form id="add-robot-form" class="form add-inline">
+            <h3 class="sub-h">Pair a robot</h3>
+            <p class="panel-note">Enter the <b>6-digit code</b> from the robot screen, pick the chassis model below, then confirm. The robot must accept pairing on its side.</p>
+            <div class="add-row">
+              <input name="pairing_code" inputmode="numeric" maxlength="6" placeholder="Pairing code" required />
+              <select name="home_bay_id" id="fleet-home-bay"></select>
+            </div>
+            <input type="hidden" name="unit_image" id="fleet-unit-image" value="1" />
+            <div class="field-block field-block--hero">
+              <span class="field-label">SELECT ROBOT MODEL</span>
+              <p class="pair-model-lead">Tap the image that matches this physical unit.</p>
+              <div id="fleet-unit-picker" class="unit-picker-grid unit-picker-grid--pair" role="listbox" aria-label="Robot model"></div>
+              <p class="unit-pick-selected" id="fleet-unit-selected" aria-live="polite"></p>
+            </div>
+            <div id="fleet-home-bay-custom" class="hidden field-custom">
+              <label>CUSTOM BASE NAME
+                <input id="fleet-home-bay-custom-name" placeholder="e.g. Night charge pad" autocomplete="off" />
+              </label>
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-yellow"><svg class="ic"><use href="#i-plus"/></svg> PAIR</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Locations -->
+      <section class="sset hidden" data-sec="locations">
+        <div class="panel">
+          <h2>Locations</h2>
+          <p class="panel-note">Warehouses, sections, and bays with their item counts.</p>
+          <div id="loc-list" class="sys-loading">Loading…</div>
+          <form id="add-wh-form" class="form add-inline">
+            <h3 class="sub-h">Add a warehouse</h3>
+            <div class="add-row">
+              <input name="name" placeholder="Warehouse name" required />
+              <button type="submit" class="btn btn-yellow"><svg class="ic"><use href="#i-plus"/></svg> ADD</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- Data (product import) -->
+      <section class="sset hidden" data-sec="data">
+        <div class="panel">
+          <h2>Import products</h2>
+          <p class="panel-note">Your live data lives in <code>instance/warehouse.db</code> (SQLite). The JSON file below is only an <strong>example format</strong> — nothing is loaded from disk automatically. Upload it here when you want to add products.</p>
+          <p class="panel-note">This import <strong>adds</strong> items to locations you already created. It never deletes warehouses, bays, or robots.</p>
+          <div id="data-import-info" class="data-import-info sys-loading">Loading…</div>
+          <h3 class="sub-h">Actions</h3>
+          <div class="data-actions data-actions-row">
+            <button class="btn btn-yellow" id="products-import-btn"><svg class="ic"><use href="#i-upload"/></svg> IMPORT JSON</button>
+            <input type="file" id="products-import-file" accept=".json,application/json" class="hidden" />
+          </div>
+          <div class="data-format-card">
+            <h3 class="sub-h">JSON format</h3>
+            <p class="panel-note">Each product in the <code>products</code> array needs:</p>
+            <ul class="data-format-list">
+              <li><strong>name</strong> — item name</li>
+              <li><strong>sku</strong> — stock keeping unit</li>
+              <li><strong>quantity</strong> — units on shelf</li>
+              <li><strong>age_days</strong> — optional, how long it has been in stock</li>
+              <li><strong>warehouse</strong> — site name</li>
+              <li><strong>aisle</strong> — section / aisle name</li>
+              <li><strong>bay</strong> — shelf / bay code</li>
+            </ul>
+            <p class="panel-note">Example file on disk (not loaded automatically): <code>json/products.sample.json</code></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Storage (backup) -->
+      <section class="sset hidden" data-sec="storage">
+        <div class="panel">
+          <h2>Backup &amp; restore</h2>
+          <p class="panel-note">Export, restore, and inspect what lives in your warehouse database — separate from the live system dashboard.</p>
+          <div id="storage-stats" class="sys-loading">Loading…</div>
+          <h3 class="sub-h">Actions</h3>
+          <div class="data-actions data-actions-row">
+            <button class="btn btn-line" id="export-btn"><svg class="ic"><use href="#i-download"/></svg> EXPORT JSON BACKUP</button>
+            <button class="btn btn-yellow" id="import-btn"><svg class="ic"><use href="#i-upload"/></svg> IMPORT JSON BACKUP</button>
+            <input type="file" id="import-file" accept=".json,application/json" class="hidden" />
+          </div>
+          <div class="data-actions" id="storage-empty-actions">
+            <button class="btn btn-yellow hidden" id="seed-demo-btn"><svg class="ic"><use href="#i-reload"/></svg> LOAD DEMO INVENTORY</button>
+          </div>
+          <div class="data-actions">
+            <button class="btn btn-ghost" id="reset-btn"><svg class="ic"><use href="#i-reload"/></svg> CLEAR ALL DATA</button>
+          </div>
+          <p class="panel-note">Export and import backups of your <strong>SQLite database</strong>. Product-only JSON files belong under <strong>Data</strong>, not here. Demo inventory loads warehouses and items only — robots are always paired from real hardware. Clear all data requires your password.</p>
+        </div>
+      </section>
+
+      <!-- Security -->
+      <section class="sset hidden" data-sec="security">
+        <div class="panel security-panel">
+          <h2>Security</h2>
+          <p class="panel-note security-lead">Login protection, session timeout, and network allowlist. Robots on your LAN can always reach the server for pairing and heartbeats — the allowlist applies to <strong>staff browsers only</strong>.</p>
+
+          <div id="security-overview" class="security-overview sys-loading">Loading…</div>
+
+          <form id="security-form" class="security-form">
+            <div class="security-grid">
+              <div class="security-card">
+                <h3 class="security-card-title">Login protection</h3>
+                <p class="security-card-note">Lock sign-in after too many wrong passwords.</p>
+                <div class="security-field-row">
+                  <label>MAX FAILED LOGINS
+                    <input name="max_login_attempts" id="sec-attempts" type="number" min="3" max="20" required />
+                  </label>
+                  <label>LOCKOUT (minutes)
+                    <input name="lockout_minutes" id="sec-lockout" type="number" min="1" max="60" required />
+                  </label>
+                </div>
+              </div>
+
+              <div class="security-card">
+                <h3 class="security-card-title">Session</h3>
+                <p class="security-card-note">How long a staff login stays active when idle.</p>
+                <label>TIMEOUT (hours)
+                  <input name="session_hours" id="sec-session" type="number" min="1" max="72" required />
+                </label>
+              </div>
+
+              <div class="security-card security-card-wide" id="sec-ip-card">
+                <div class="security-card-head">
+                  <div>
+                    <h3 class="security-card-title">Network allowlist</h3>
+                    <p class="security-card-note">Optional — limit which IPs can open the staff UI.</p>
+                  </div>
+                  <label class="security-toggle">
+                    <input type="checkbox" name="ip_allowlist_enabled" id="sec-ip-enabled" />
+                    <span class="security-toggle-ui" aria-hidden="true"></span>
+                    <span class="security-toggle-lbl" id="sec-ip-toggle-lbl">Off</span>
+                  </label>
+                </div>
+                <div class="security-ip-body" id="sec-ip-body">
+                  <label>ALLOWED IPs / SUBNETS <span class="security-label-sub">one per line</span>
+                    <textarea name="ip_allowlist" id="sec-ip-list" class="sec-ip-list" placeholder="192.168.1.10&#10;192.168.1.&#10;10.0.0.0/24"></textarea>
+                  </label>
+                  <p class="field-hint">Examples: <code>192.168.1.42</code> · prefix <code>192.168.1.</code> · subnet <code>10.0.0.0/24</code>. Localhost is always allowed.</p>
+                </div>
+              </div>
+
+              <div class="security-card security-card-wide security-save-card">
+                <h3 class="security-card-title">Save changes</h3>
+                <p class="security-card-note">Your current password is required to update security settings.</p>
+                <label>CURRENT PASSWORD
+                  <input name="current_password" type="password" required autocomplete="current-password" />
+                </label>
+                <div class="form-actions">
+                  <button class="btn btn-yellow" type="submit">SAVE SECURITY</button>
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- System -->
+      <section class="sset hidden" data-sec="system">
+        <div class="panel system-panel">
+          <div class="system-head">
+            <div>
+              <h2>System overview</h2>
+              <p class="panel-note">Warehouse data and the device running this server.</p>
+            </div>
+            <button type="button" class="btn btn-line btn-sm" id="system-refresh"><svg class="ic"><use href="#i-reload"/></svg> REFRESH</button>
+          </div>
+          <div id="system-stats" class="sys-loading">Loading…</div>
+        </div>
+      </section>
+
+      <!-- Integration -->
+      <section class="sset hidden" data-sec="integration">
+        <div class="panel relay-panel">
+          <h2>Warehouse Relay</h2>
+          <p class="panel-note relay-lead">A public doorway to this warehouse from anywhere — robots, store, and staff off-LAN. Uses Cloudflare Tunnel (<code>cloudflared</code>) when installed on the server.</p>
+
+          <div class="relay-overview" id="relay-overview">
+            <div class="relay-stat" id="relay-stat-installed">
+              <span class="n">…</span>
+              <span class="l">cloudflared</span>
+            </div>
+            <div class="relay-stat" id="relay-stat-mode">
+              <span class="n">—</span>
+              <span class="l">Tunnel mode</span>
+            </div>
+            <div class="relay-stat" id="relay-stat-live">
+              <span class="n">—</span>
+              <span class="l">Live link</span>
+            </div>
+          </div>
+
+          <p class="relay-status-msg" id="relay-status-msg" role="status">Checking relay…</p>
+
+          <div class="relay-url-box hidden" id="relay-url-box">
+            <span class="relay-url-label">Public address</span>
+            <code class="relay-url" id="relay-url">—</code>
+            <button type="button" class="btn btn-line btn-sm" id="relay-copy">COPY</button>
+            <a class="btn btn-line btn-sm" id="relay-open" href="#" target="_blank" rel="noopener">OPEN</a>
+          </div>
+
+          <form id="relay-form" class="form relay-form">
+            <div class="notif-toggle-row">
+              <span class="toggle-name">Enable Warehouse Relay</span>
+              <label class="switch"><input type="checkbox" id="relay-enabled" /><span class="slider"></span></label>
+            </div>
+            <p class="field-hint relay-hint" id="relay-hint">When enabled, WarehouseDB starts a tunnel while it runs. Quick tunnels get a random <code>*.trycloudflare.com</code> link that stays the same until you restart the server. After install, a named <code>warehouse</code> tunnel can give you a fixed domain.</p>
+            <div class="form-actions">
+              <button type="button" class="btn btn-line btn-sm" id="relay-refresh"><svg class="ic"><use href="#i-reload"/></svg> REFRESH STATUS</button>
+              <button class="btn btn-yellow" type="submit">SAVE RELAY</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel integration-panel">
+          <h2>Robot integration</h2>
+          <p class="panel-note integration-lead">A real robot connects over HTTP using these endpoints — no extra services. Same server as the board.</p>
+
+          <div class="integration-overview">
+            <div class="integration-stat">
+              <span class="n">HTTP</span>
+              <span class="l">Direct on LAN</span>
+            </div>
+            <div class="integration-stat">
+              <span class="n">1</span>
+              <span class="l">Server host</span>
+            </div>
+            <div class="integration-stat on">
+              <span class="n">X-Robot-Code</span>
+              <span class="l">Device auth header</span>
+            </div>
+          </div>
+
+          <div class="integration-legend" aria-label="Authentication types">
+            <span class="integration-legend-item"><span class="api-auth staff">Staff</span> logged-in browser session</span>
+            <span class="integration-legend-item"><span class="api-auth robot">Robot</span> <code>X-Robot-Code</code> header</span>
+            <span class="integration-legend-item"><span class="api-auth open">Open</span> no login required</span>
+          </div>
+
+          <h3 class="integration-sub">Pairing</h3>
+          <div class="api-list">
+            <div class="api-row">
+              <span class="api-m post">POST</span>
+              <code class="api-path">/api/robots/pair</code>
+              <span class="api-d">Staff: link a robot's 6-digit screen code to a name</span>
+              <span class="api-auth staff">Staff</span>
+            </div>
+            <div class="api-row">
+              <span class="api-m post">POST</span>
+              <code class="api-path">/api/robots/claim</code>
+              <span class="api-d">Robot: confirm pairing with the same code</span>
+              <span class="api-auth open">Open</span>
+            </div>
+            <div class="api-row">
+              <span class="api-m get">GET</span>
+              <code class="api-path">/api/robots/&lt;id&gt;/pair-status</code>
+              <span class="api-d">Poll while waiting for the robot to connect</span>
+              <span class="api-auth staff">Staff</span>
+            </div>
+          </div>
+
+          <h3 class="integration-sub">Robot device</h3>
+          <div class="api-list">
+            <div class="api-row">
+              <span class="api-m get">GET</span>
+              <code class="api-path">/api/robots/&lt;id&gt;/tasks</code>
+              <span class="api-d">Robot polls work — header <code>X-Robot-Code</code></span>
+              <span class="api-auth robot">Robot</span>
+            </div>
+            <div class="api-row">
+              <span class="api-m put">PUT</span>
+              <code class="api-path">/api/tasks/&lt;id&gt;</code>
+              <span class="api-d">Report progress (queued → in&nbsp;progress → done)</span>
+              <span class="api-auth robot">Robot</span>
+            </div>
+            <div class="api-row">
+              <span class="api-m put">PUT</span>
+              <code class="api-path">/api/robots/&lt;id&gt;</code>
+              <span class="api-d">Edit display name / home bay (not live status)</span>
+              <span class="api-auth staff">Staff</span>
+            </div>
+          </div>
+
+          <h3 class="integration-sub">Lookups</h3>
+          <div class="api-list">
+            <div class="api-row">
+              <span class="api-m get">GET</span>
+              <code class="api-path">/api/items/&lt;id&gt;</code>
+              <span class="api-d">Resolve an item to its exact location path</span>
+              <span class="api-auth staff">Staff</span>
+            </div>
+            <div class="api-row">
+              <span class="api-m get">GET</span>
+              <code class="api-path">/api/tree</code>
+              <span class="api-d">Full warehouse → section → bay hierarchy</span>
+              <span class="api-auth staff">Staff</span>
+            </div>
+          </div>
+
+          <p class="integration-foot">Base URL is this server. The full endpoint list is in the project <code>README.md</code> and the staff <a href="{{ url_for('main.guide') }}">guide</a>.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirm-title">CONFIRM</h2>
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-no">CANCEL</button>
+      <button type="button" class="btn btn-yellow" id="confirm-yes">CONFIRM</button>
+    </div>
+  </div>
+</div>
+
+<div id="password-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="password-title">CONFIRM PASSWORD</h2>
+    <p id="password-msg" class="confirm-msg"></p>
+    <form id="password-form" class="form">
+      <label>CURRENT PASSWORD<input type="password" id="password-input" required autocomplete="current-password" /></label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="password-cancel">CANCEL</button>
+        <button type="submit" class="btn btn-yellow">CONTINUE</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/settings.js') }}?v=pair-robot-2"></script>
+{% endblock %}

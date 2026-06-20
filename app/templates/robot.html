@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}Robot — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app detail-page robot-page" data-robot-id="{{ robot_id }}">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1 id="robot-name">ROBOT</h1>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_fleet') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <div class="detail-grid robot-grid">
+    <section class="panel">
+      <h2><svg class="ic"><use href="#i-edit"/></svg> Robot</h2>
+      <div class="robot-live-status">
+        <span class="lbl">LIVE STATUS</span>
+        <span id="robot-status-pill" class="status-pill">…</span>
+      </div>
+      <p class="panel-note" id="robot-status-note">Reported automatically when the robot connects. You cannot set offline or online manually.</p>
+      <form id="robot-edit-form" class="form">
+        <label>DISPLAY NAME
+          <input name="name" id="robot-name-input" readonly autocomplete="off" />
+          <span class="field-hint">Set when the robot was paired — not editable here.</span>
+        </label>
+        <label>HOME BAY
+        <select name="home_bay_id" id="robot-home-bay"></select>
+        <span class="field-hint">Where this robot returns after tasks or to charge — pick a base or add a custom one.</span>
+        </label>
+        <div id="robot-home-bay-custom" class="hidden field-custom">
+          <label>CUSTOM BASE NAME
+            <input id="robot-home-bay-custom-name" placeholder="e.g. Night charge pad" autocomplete="off" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="delete-robot"><svg class="ic"><use href="#i-trash"/></svg> DELETE</button>
+          <button type="submit" class="btn btn-yellow">SAVE</button>
+        </div>
+      </form>
+      <div class="pair-panel">
+        <h3>Charging</h3>
+        <p class="panel-note">Send this robot to its home bay to charge. This is separate from warehouse work tasks.</p>
+        <div class="charge-row">
+          <div class="charge-bar" id="robot-battery-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Battery level">
+            <div class="charge-bar-fill" id="robot-battery-fill"></div>
+            <span class="charge-bar-pct" id="robot-battery-pct">—</span>
+          </div>
+          <button type="button" class="btn btn-yellow charge-go-btn" id="send-charge-btn">GO CHARGE</button>
+        </div>
+      </div>
+      <div class="pair-panel">
+        <h3>Connection</h3>
+        <div class="robot-info-card">
+          <div class="info-row">
+            <span class="info-lbl">STATE</span>
+            <span class="info-val" id="robot-conn-state">…</span>
+          </div>
+          <div class="info-row">
+            <span class="info-lbl">PAIRED</span>
+            <span class="info-val" id="robot-paired-at">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-lbl">LAST SEEN</span>
+            <span class="info-val" id="robot-last-seen">—</span>
+          </div>
+        </div>
+        <p class="panel-note" id="robot-conn-note"></p>
+      </div>
+      <div class="pair-panel" id="robot-firmware-panel">
+        <h3>Firmware</h3>
+        <div class="firmware-banner hidden" id="robot-firmware-banner" role="status">
+          <span class="firmware-banner-tag">UPDATE</span>
+          <span class="firmware-banner-copy">A newer firmware release is available for this robot.</span>
+        </div>
+        <div class="robot-info-card">
+          <div class="info-row">
+            <span class="info-lbl">INSTALLED</span>
+            <span class="info-val" id="robot-fw-installed">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-lbl">LATEST</span>
+            <span class="info-val" id="robot-fw-latest">—</span>
+          </div>
+          <div class="info-row hidden" id="robot-fw-released-row">
+            <span class="info-lbl">RELEASED</span>
+            <span class="info-val" id="robot-fw-released">—</span>
+          </div>
+        </div>
+        <p class="panel-note" id="robot-fw-note">Checking firmware…</p>
+        <p class="field-hint" id="robot-fw-sketch"></p>
+        <div class="firmware-actions">
+          <button type="button" class="btn btn-yellow hidden" id="robot-fw-update"><svg class="ic"><use href="#i-reload"/></svg> UPDATE FIRMWARE</button>
+          <a class="btn btn-line btn-sm" id="robot-fw-guide" href="{{ url_for('main.guide') }}#firmware"><svg class="ic"><use href="#i-guide"/></svg> FLASH GUIDE</a>
+        </div>
+      </div>
+    </section>
+
+    <aside class="panel">
+      <h2><svg class="ic"><use href="#i-pin"/></svg> Home base</h2>
+      <p class="panel-note">The robot home warehouse and its bases — where this unit returns when idle or charging.</p>
+      <div id="robot-map" class="robot-map"></div>
+    </aside>
+
+    <section class="panel tasks-panel">
+      <h2><svg class="ic"><use href="#i-tasks"/></svg> Assigned tasks</h2>
+      <p class="panel-note">Latest work orders for this robot (two most recent). Status updates automatically when the robot is working — use <strong>Cancel</strong> to stop an open task.</p>
+      <div id="robot-tasks" class="robot-tasks"></div>
+      <div id="robot-tasks-more" class="robot-tasks-more hidden"></div>
+      <h3 class="sub-h">Assign new task</h3>
+      <p class="panel-note" id="assign-task-note"></p>
+      <form id="add-task-form" class="form add-task">
+        <div class="add-task-grid add-task-grid--compact">
+          <label>ACTION
+            <select name="action" id="t-action">
+              <option value="pick">PICK</option>
+              <option value="restock">RESTOCK</option>
+              <option value="move">MOVE</option>
+              <option value="inspect">INSPECT</option>
+            </select>
+            <span class="field-hint" id="t-action-hint"></span>
+          </label>
+          <label id="t-item-wrap"><span id="t-item-label">ITEM</span>
+            <div id="t-item-mount"></div>
+          </label>
+          <label id="t-section-wrap"><span id="t-section-label">WHERE TO GO</span>
+            <div id="t-section-mount"></div>
+            <span class="field-hint hidden" id="t-from-hint"></span>
+          </label>
+          <label id="t-qty-wrap">HOW MANY
+            <input type="number" name="quantity" id="t-qty" class="qty-input" min="1" value="1" inputmode="numeric" required />
+            <span class="field-hint" id="t-qty-hint"></span>
+          </label>
+          <label class="grid-span-full">TAG
+            <div class="task-tag-field" id="t-tag-field">
+              <div class="task-tag-chips"></div>
+              <input type="text" class="task-tag-type" placeholder="e.g. fragile — press Enter to add" autocomplete="off" aria-label="Task tag" />
+              <input type="hidden" name="note" />
+            </div>
+            <span class="field-hint">Add one or more labels — press Enter after each</span>
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="btn btn-yellow"><svg class="ic"><use href="#i-plus"/></svg> ADD TASK</button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirm-title">CONFIRM</h2>
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-no">CANCEL</button>
+      <button type="button" class="btn btn-yellow" id="confirm-yes">CONFIRM</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/robotPage.js') }}"></script>
+{% endblock %}

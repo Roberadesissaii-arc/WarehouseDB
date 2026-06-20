@@ -1,0 +1,47 @@
+// =============================================================================
+// config.h — LOCAL ONLY (never commit this file to git)
+//
+// SETUP: Copy this file to config.h in the same folder, then edit config.h:
+//
+//   copy config.h.example config.h        (Windows)
+//   cp config.h.example config.h          (Mac / Linux)
+//
+// Put your Wi-Fi password, server IP, and unit ID in config.h only.
+// The .ino sketch includes config.h — do not add secrets to the .ino file.
+// =============================================================================
+#pragma once
+
+// ---- Robot unit (must match folder name: WarehouseDB_55EF4) ----
+#define ROBOT_UNIT_ID "55EF4"
+#define ROBOT_NVS_NS "wdb_55ef4"
+#define FIRMWARE_VERSION "1.0.0"
+
+// ---- Wi-Fi (2.4 GHz only on most ESP32 boards) ----
+#define WIFI_SSID "YourWiFiName"
+#define WIFI_PASSWORD "YourWiFiPassword"
+
+// ---- WarehouseDB server on your LAN ----
+// Run the app on your PC/Pi, then use that machine's local IP (not 127.0.0.1).
+// Example: python run.py  →  http://192.168.1.42:8000
+#define WAREHOUSE_HOST "192.168.1.42"
+#define WAREHOUSE_PORT 8000
+
+// ---- OLED display (SSD1306 128x64, I2C) ----
+// Common ESP32 wiring: SDA → GPIO 21, SCL → GPIO 22, VCC → 3.3V, GND → GND
+#define OLED_SDA 21
+#define OLED_SCL 22
+#define OLED_ADDRESS 0x3C   // try 0x3D if the screen stays blank
+
+// ---- Timing (milliseconds) ----
+#define CLAIM_POLL_MS 2000      // retry pairing while waiting for staff
+#define HEARTBEAT_MS 1000       // status ping every second (online/offline in app)
+#define TASK_POLL_MS 5000       // fetch assigned tasks + show task ID on screen
+
+// ---- Battery monitor (optional) ----
+// Wire a LiPo through a 2:1 voltage divider into an ADC pin (e.g. GPIO 34).
+// Set BATTERY_PIN to -1 if your robot has no battery sensor yet.
+#define BATTERY_PIN -1
+// #define BATTERY_PIN 34
+#define BATTERY_MIN_MV 3200     // empty cell (~3.2 V)
+#define BATTERY_MAX_MV 4200     // full cell (~4.2 V)
+#define BATTERY_DIVIDER 2.0f    // multiply ADC mV when using a 2:1 divider

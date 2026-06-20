@@ -1,0 +1,29 @@
+<div class="account">
+  <button class="btn btn-line account-btn" id="account-btn" type="button"><svg class="ic"><use href="#i-account"/></svg> {{ current_user }} <span class="caret-dn">▼</span></button>
+  <div class="account-menu hidden" id="account-menu">
+    <div class="account-head"><span class="lbl">SIGNED IN AS</span><span class="who">{{ current_user }}</span></div>
+    <a href="{{ url_for('main.settings') }}"><svg class="ic"><use href="#i-setting"/></svg> Settings</a>
+    <a href="{{ url_for('main.guide') }}"><svg class="ic"><use href="#i-guide"/></svg> Staff guide</a>
+    <a href="{{ url_for('auth.logout') }}"><svg class="ic"><use href="#i-logout"/></svg> Log out</a>
+  </div>
+</div>
+<div class="notif-wrap">
+  <button class="btn btn-line notif-btn" id="notif-btn" type="button" aria-expanded="false" aria-controls="notif-panel">
+    <svg class="ic"><use href="#i-bell"/></svg> ALERTS
+    <span class="notif-live-dot" id="notif-live" title="Live feed"></span>
+    <span class="notif-badge hidden" id="notif-badge">0</span>
+  </button>
+  <div class="notif-panel hidden" id="notif-panel" aria-label="Alerts">
+    <div class="notif-panel-head">
+      <div>
+        <h2>ALERTS</h2>
+        <p class="notif-panel-sub" id="notif-feed-status">Live · warehouse activity</p>
+      </div>
+    </div>
+    <div class="notif-panel-actions">
+      <button type="button" class="btn btn-ghost btn-sm" id="notif-read-all">MARK ALL READ</button>
+      <button type="button" class="btn btn-line btn-sm" id="notif-clear-all">CLEAR ALL</button>
+    </div>
+    <div class="notif-list" id="notif-list"></div>
+  </div>
+</div>

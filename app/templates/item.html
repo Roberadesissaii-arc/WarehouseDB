@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Item — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app detail-page item-page" data-item-id="{{ item_id }}">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1 id="detail-name">ITEM</h1>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_items') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <div class="detail-grid">
+    <section class="panel">
+      <h2><svg class="ic"><use href="#i-edit"/></svg> Edit item</h2>
+      <p class="panel-note">Change any field and Save. Move it by picking another bay.</p>
+      <form id="detail-form" class="form item-edit-form">
+        <label class="sku-field">SKU / NUMBER
+          <div class="sku-field-stack">
+            <input name="sku" id="detail-sku-input" autocomplete="off" />
+            <span class="field-hint">Unique product code for scans and labels. Leave blank to assign one automatically.</span>
+            <button type="button" class="btn btn-line sku-generate-btn" id="detail-sku-refresh" title="Generate another SKU"><svg class="ic"><use href="#i-reload"/></svg> GENERATE SKU</button>
+          </div>
+        </label>
+        <label>NAME
+          <input name="name" id="detail-name-input" required autocomplete="off" />
+          <span class="field-hint">Product name — enter manually.</span>
+        </label>
+        <label>QUANTITY IN STOCK<input type="number" name="quantity" min="1" value="1" inputmode="numeric" required /></label>
+        <label>LOCATION (BAY)<span id="shelf-select"></span></label>
+        <label>NOTES<textarea name="notes" rows="3" placeholder="optional"></textarea></label>
+        <div class="form-actions">
+          <button type="button" class="btn btn-ghost" id="delete-item"><svg class="ic"><use href="#i-trash"/></svg> DELETE</button>
+          <button type="submit" class="btn btn-yellow">SAVE</button>
+        </div>
+      </form>
+    </section>
+
+    <aside class="panel info-panel">
+      <h2><svg class="ic"><use href="#i-pin"/></svg> Location</h2>
+      <div id="loc-card" class="loc-card loc-card--loading">
+        <div class="skel-block skel-loc-path"></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-loc-row"><div class="skel-block skel-loc-k"></div><div class="skel-block skel-loc-v"></div></div>
+        <div class="skel-block skel-loc-api"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="detail-extra">
+    <section class="panel">
+      <h2><svg class="ic"><use href="#i-items"/></svg> On this bay</h2>
+      <p class="panel-note">Other items sharing this exact bay.</p>
+      <div id="bay-items" class="mini-list"></div>
+    </section>
+    <section class="panel">
+      <h2><svg class="ic"><use href="#i-robot"/></svg> Robots in this section</h2>
+      <p class="panel-note">Who can service this location.</p>
+      <div id="section-robots" class="mini-list"></div>
+    </section>
+    <section class="panel">
+      <h2><svg class="ic"><use href="#i-tasks"/></svg> Tasks for this item</h2>
+      <p class="panel-note">Open or past work orders targeting it.</p>
+      <div id="item-tasks" class="mini-list"></div>
+    </section>
+    <section class="panel panel-qr">
+      <h2><svg class="ic"><use href="#i-items"/></svg> Scan codes</h2>
+      <p class="panel-note">Print or display these — floor staff scan with the mobile app; robots use the API payload.</p>
+      <div id="item-qr-grid" class="qr-grid" data-scan-url="{{ scan_url }}"></div>
+    </section>
+  </div>
+</div>
+
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirm-title">CONFIRM</h2>
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-no">CANCEL</button>
+      <button type="button" class="btn btn-yellow" id="confirm-yes">CONFIRM</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/vendor/qrcode.min.js') }}"></script>
+<script type="module" src="{{ url_for('static', filename='js/pages/itemPage.js') }}"></script>
+{% endblock %}

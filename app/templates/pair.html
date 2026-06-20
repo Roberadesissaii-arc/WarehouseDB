@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Pair robot — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app detail-page pair-page">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1><svg class="ic ic-lg"><use href="#i-robot"/></svg> PAIR ROBOT</h1>
+      <p class="sub">/// register a new unit</p>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_fleet') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <section class="panel pair-page-panel">
+    <form id="robot-form" class="form pair-page-form">
+      <ol class="pair-steps">
+        <li><strong>Select the robot model</strong> below (tap the matching image)</li>
+        <li>On the physical robot, open <strong>Settings → Pair warehouse</strong></li>
+        <li>Enter the <strong>6-digit code</strong> shown on the robot screen</li>
+      </ol>
+
+      <div class="field-block field-block--hero">
+        <span class="field-label">SELECT ROBOT MODEL</span>
+        <p class="pair-model-lead">Choose the chassis that matches this unit — the fleet board uses its image and name.</p>
+        <input type="hidden" name="unit_image" id="robot-unit-image" value="1" />
+        <div id="robot-unit-picker" class="unit-picker-grid unit-picker-grid--pair" role="listbox" aria-label="Robot model"></div>
+        <p class="unit-pick-selected" id="robot-unit-selected" aria-live="polite">Atlas MK-I · unit-amr-01</p>
+      </div>
+
+      <label>PAIRING CODE (FROM ROBOT)<input name="pairing_code" id="pairing-code-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autocomplete="off" /></label>
+      <p class="pair-field-error hidden" id="pair-code-error" role="alert"></p>
+
+      <label>HOME BAY
+        <select name="home_bay_id" id="robot-home-bay"></select>
+        <span class="field-hint">Where the robot returns after tasks or to charge — pick a base or add custom.</span>
+      </label>
+      <div id="robot-home-bay-custom" class="hidden field-custom">
+        <label>CUSTOM BASE NAME
+          <input id="robot-home-bay-custom-name" placeholder="e.g. Night charge pad" autocomplete="off" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-yellow">START PAIRING</button>
+      </div>
+    </form>
+
+    <div id="robot-wait" class="hidden pair-page-step">
+      <p class="pair-lead">Waiting for the robot…</p>
+      <p class="panel-note">If the robot shows a confirmation prompt, accept it. This screen updates when the unit connects.</p>
+      <div class="pair-code-display" id="wait-code">------</div>
+      <div class="pair-wait-status" id="wait-status">Waiting for robot to respond…</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="pair-cancel">CANCEL</button>
+      </div>
+    </div>
+
+    <div id="robot-failed" class="hidden pair-page-step">
+      <p class="pair-lead">Could not connect</p>
+      <p class="panel-note" id="pair-fail-msg">No robot responded with this pairing code. Check the code on the robot screen and try again.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-yellow" id="pair-retry">TRY AGAIN</button>
+        <button type="button" class="btn btn-ghost" id="pair-fail-close">BACK TO FLEET</button>
+      </div>
+    </div>
+
+    <div id="robot-paired" class="hidden pair-page-step">
+      <p class="pair-lead">Robot connected</p>
+      <p class="panel-note" id="pair-success-msg"></p>
+      <div class="form-actions">
+        <a class="btn btn-line" id="pair-view" href="#">VIEW ROBOT</a>
+        <button type="button" class="btn btn-yellow" id="pair-done">BACK TO FLEET</button>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/pages/pairPage.js') }}?v=pair-page-1"></script>
+{% endblock %}

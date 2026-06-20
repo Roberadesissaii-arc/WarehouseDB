@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block title %}Guide — WarehouseDB{% endblock %}
+
+{% block body %}
+<div class="app guide">
+  <header class="masthead masthead--detail">
+    <div class="title-block">
+      <h1>STAFF<span>GUIDE</span></h1>
+      <p class="sub">{% if org_name %}{{ org_name }}{% else %}/// how to run the warehouse board{% endif %}</p>
+    </div>
+    <a class="btn btn-yellow masthead-back" href="{{ url_for('main.board_items') }}"><svg class="ic"><use href="#i-arrow-left"/></svg> BACK</a>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <nav class="doc-toc" aria-label="Guide contents">
+    <h2 class="doc-toc-title">Contents</h2>
+    <ol>
+      <li><a href="#overview">What this system is</a></li>
+      <li><a href="#setup">First-time setup (production)</a></li>
+      <li><a href="#board">Reading the board</a></li>
+      <li><a href="#items">Items</a></li>
+      <li><a href="#fleet">Fleet &amp; robots</a></li>
+      <li><a href="#pairing">Pairing an ESP32 robot</a></li>
+      <li><a href="#robot-page">Robot detail page</a></li>
+      <li><a href="#tasks">Tasks &amp; work order IDs</a></li>
+      <li><a href="#map">Map &amp; floor plan</a></li>
+      <li><a href="#alerts">Alerts &amp; live feed</a></li>
+      <li><a href="#settings">Settings</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#data">Backup, import &amp; clear</a></li>
+      <li><a href="#esp32">Physical robot (ESP32)</a></li>
+      <li><a href="#api">Robot API reference</a></li>
+    </ol>
+  </nav>
+
+  <article class="doc">
+    <section class="doc-block" id="overview">
+      <h2>1 · What this system is</h2>
+      <p>WarehouseDB is the control board for your physical warehouse. It answers two questions at all times:
+      <strong>where is every item?</strong> and <strong>where is every robot?</strong></p>
+      <p>Each item is one real object on exactly one shelf bay. Each robot is a connected worker that
+      heartbeats to the server, receives numbered work orders, and reports its live status.</p>
+      <p>Locations are organised in three levels (there is no separate “aisle” row — an <strong>aisle is a section</strong>):</p>
+      <div class="hierarchy">
+        <span class="lvl">WAREHOUSE</span><span class="sep">→</span>
+        <span class="lvl">AISLE / ZONE</span><span class="sep">→</span>
+        <span class="lvl">BAY</span><span class="sep">→</span>
+        <span class="lvl tag-lvl">ITEM</span>
+      </div>
+      <p class="note">Example: <code>Main Site → Aisle A → A-01 → Drive Chain</code> — create the aisle as a
+      <strong>section</strong> named <code>Aisle A</code>, then add bays <code>A-01</code>, <code>A-02</code> inside it.</p>
+    </section>
+
+    <section class="doc-block" id="setup">
+      <h2>2 · First-time setup (production)</h2>
+      <p>A fresh install starts <strong>empty</strong> — no sample warehouses or demo robots. Build your
+      real layout before pairing hardware:</p>
+      <ol class="doc-steps">
+        <li><strong>Create your account</strong> — first visit shows a setup form (one username + password for this server; 8+ characters with a letter and a number). No preset login exists.</li>
+        <li><strong>Add a warehouse</strong> — use the <code>＋ Warehouse</code> chip on the deck, or Settings → Locations.</li>
+        <li><strong>Add sections</strong> — storage zones inside that warehouse (e.g. Receiving, Aisle A).</li>
+        <li><strong>Add bays</strong> — shelf codes inside each section (e.g. <code>A-01</code>).</li>
+        <li><strong>Add items</strong> — Items view → <code>NEW ITEM</code>, assign each product to a bay.</li>
+        <li><strong>Pair robots</strong> — Fleet → <code>PAIR ROBOT</code> (see section 6).</li>
+        <li><strong>Assign tasks</strong> — Tasks view or a robot's page when work is ready.</li>
+      </ol>
+      <p class="note">Set your <strong>organization name</strong> in Settings → General so the header shows your company name.</p>
+    </section>
+
+    <section class="doc-block" id="board">
+      <h2>3 · Reading the board</h2>
+      <p>The home page has four views — switch with the tabs above the card grid:</p>
+      <ul>
+        <li><strong>ITEMS</strong> — inventory tags for every product on file.</li>
+        <li><strong>FLEET</strong> — robots grouped by home section; live online/offline status.</li>
+        <li><strong>TASKS</strong> — work orders assigned to robots.</li>
+        <li><strong>MAP</strong> — floor plan of the selected warehouse (zones, bays, robots).</li>
+      </ul>
+      <p>The <strong>navigation deck</strong> filters everything below it:</p>
+      <ul>
+        <li><strong>Warehouse</strong> — click to focus on one site.</li>
+        <li><strong>Aisle / zone</strong> — the walkway or storage zone (e.g. <code>Aisle A</code>, <code>Receiving</code>). This is a <strong>section</strong> in the system.</li>
+        <li><strong>Bays</strong> — shelf positions inside that aisle; the black number is how many items sit on that bay.
+        <strong>ALL BAYS</strong> clears the bay filter.</li>
+      </ul>
+      <p>The <strong>counters</strong> row shows live totals: warehouses, bays, items, robots, and open tasks.
+      Use the <code>FIND</code> search box to look up items (by name or SKU) or filter tasks/fleet by keyword.</p>
+      <p>Top right: your <strong>account menu</strong> (Settings, Staff guide, Log out) and <strong>ALERTS</strong> (live notification feed).</p>
+    </section>
+
+    <section class="doc-block" id="items">
+      <h2>4 · Items</h2>
+      <p>Each item appears as a tag: name, yellow SKU stamp, barcode strip, and location chips at the bottom.</p>
+      <ul>
+        <li><strong>Add</strong> — Items view → first <code>NEW ITEM</code> card → name, optional SKU, shelf, notes → Save.</li>
+        <li><strong>Edit or move</strong> — click any tag. Change the shelf to move it to another bay.</li>
+        <li><strong>Detail page</strong> — click a tag to open its full record at <code>/items/&lt;id&gt;</code>.</li>
+        <li><strong>Delete</strong> — open the item → <code>DELETE</code>.</li>
+        <li><strong>Search</strong> — <code>FIND</code> box filters by name or SKU across the warehouse.</li>
+      </ul>
+    </section>
+
+    <section class="doc-block" id="fleet">
+      <h2>5 · Fleet &amp; robots</h2>
+      <p><strong>Robots are workers, not inventory.</strong> Switch to <strong>FLEET</strong> to monitor them.
+      Robots are grouped by <strong>home section</strong> — where they are stationed when idle.
+      Unassigned robots appear in their own group.</p>
+      <p>Each robot shows a coloured status dot. Status is <strong>live</strong> — reported by the robot
+      over the network. Staff cannot set online/offline manually.</p>
+      <ul class="status-key">
+        <li><span class="dot status-working"></span><strong>Working</strong> — carrying out a queued or in-progress task.</li>
+        <li><span class="dot status-idle"></span><strong>Idle</strong> — connected and available.</li>
+        <li><span class="dot status-charging"></span><strong>Charging</strong> — docked; not available for work.</li>
+        <li><span class="dot status-offline"></span><strong>Offline</strong> — not connected; no heartbeat for ~10 seconds.</li>
+      </ul>
+      <p>The fleet and tasks views <strong>auto-refresh every few seconds</strong> so online/offline changes
+      appear without reloading the page. The map view does the same.</p>
+      <p>Click any robot card to open its detail page. The first card is <code>PAIR ROBOT</code> for registering new hardware.</p>
+    </section>
+
+    <section class="doc-block" id="pairing">
+      <h2>6 · Pairing an ESP32 robot</h2>
+      <p>Pairing links a physical robot (ESP32 with OLED screen) to a record in WarehouseDB. Each robot has a
+      unique <strong>device ID</strong> (its Wi-Fi MAC address) and shows a <strong>6-digit pairing code</strong> on its screen.</p>
+      <h3 class="doc-sub">Step by step</h3>
+      <ol class="doc-steps">
+        <li>Power on the robot. It connects to Wi-Fi and shows a <strong>6-digit code</strong> on the OLED (e.g. <code>695577</code>).</li>
+        <li>On the board: <strong>FLEET</strong> → <code>PAIR ROBOT</code> (or Settings → Fleet).</li>
+        <li>Enter the code, a <strong>display name</strong>, and optionally a <strong>home section</strong>.</li>
+        <li>Click <code>START PAIRING</code>. The app waits for the robot to confirm.</li>
+        <li>Within a few seconds the robot calls the server and both sides show <strong>connected</strong>.</li>
+      </ol>
+      <h3 class="doc-sub">Already paired / duplicate protection</h3>
+      <ul>
+        <li>If you enter a code that is <strong>already paired</strong>, the app shows an error under the code field with a link to the existing robot — you cannot register it twice.</li>
+        <li>If pairing is <strong>in progress</strong> for that code, wait for the robot to connect or remove the pending slot.</li>
+        <li>If the same physical robot tries to pair again, the ESP32 screen shows <strong>ALREADY PAIRED</strong> or recovers automatically if it is the same device.</li>
+      </ul>
+      <h3 class="doc-sub">Network requirements</h3>
+      <ul>
+        <li>The server PC and the ESP32 must be on the <strong>same Wi-Fi network</strong> (2.4 GHz).</li>
+        <li>The server must listen on <strong>0.0.0.0:8000</strong> (not only localhost) so the robot can reach it.</li>
+        <li>Use your PC's LAN IP in the robot's <code>config.h</code> (e.g. <code>192.168.4.21</code>), not <code>127.0.0.1</code>.</li>
+      </ul>
+      <p class="note">After <strong>Clear all data</strong> or deleting a robot from the fleet, the ESP32 detects
+      disconnection within ~1 second and returns to pairing mode with its code on screen. You must pair again.</p>
+    </section>
+
+    <section class="doc-block" id="robot-page">
+      <h2>7 · Robot detail page</h2>
+      <p>Click a robot in Fleet or Map to open <code>/robots/&lt;id&gt;</code>. This page has three areas:</p>
+      <ul>
+        <li><strong>Robot panel</strong> — edit display name and <strong>home section</strong> (base on the map).
+        Live status, paired time, and last-seen time update automatically. Delete removes the robot from the fleet.</li>
+        <li><strong>Home base map</strong> — mini floor plan showing which section this robot belongs to.</li>
+        <li><strong>Assigned tasks</strong> — list of work orders with <strong>#ID</strong> badges, status dropdowns, and delete buttons.</li>
+      </ul>
+      <p class="note"><strong>Home section</strong> is where the robot lives when idle.
+      <strong>Task destination</strong> (Go to section) is where a specific job sends it — these can be different.
+      Use <code>USE HOME</code> when assigning a task only if the work is at its base.</p>
+    </section>
+
+    <section class="doc-block" id="tasks">
+      <h2>8 · Tasks &amp; work order IDs</h2>
+      <p>Switch to <strong>TASKS</strong> to assign and track work. A task tells one robot what to do and where.</p>
+      <ul>
+        <li><strong>Assign</strong> — <code>NEW TASK</code> → pick robot, action (pick / restock / move / inspect / charge),
+        <strong>destination section</strong> (required), optional item and note → Save.</li>
+        <li><strong>Work order ID</strong> — every task gets a unique number (e.g. <code>#8</code>). This appears on
+        task cards, the robot page, the assign toast, and the <strong>ESP32 OLED screen</strong> when the robot picks up the job.</li>
+        <li><strong>Statuses</strong> — <strong>Queued</strong> → <strong>In progress</strong> → <strong>Done</strong> (or <strong>Cancelled</strong>).
+        Click a task card to edit.</li>
+        <li>The <strong>Open tasks</strong> counter totals everything queued or in progress.</li>
+      </ul>
+      <p>When a robot has an active task, its screen shows the ID and action (e.g. <code>#8</code> / <code>PICK</code> / <code>ONLINE</code>).</p>
+    </section>
+
+    <section class="doc-block" id="map">
+      <h2>9 · Map &amp; floor plan</h2>
+      <p>Switch to <strong>MAP</strong> for a live floor plan of the selected warehouse. The view includes:</p>
+      <ul>
+        <li>A <strong>toolbar</strong> with zone count, bay count, item count, and robots online.</li>
+        <li>A <strong>status legend</strong> (Working · Idle · Charging · Offline).</li>
+        <li>One <strong>zone card</strong> per section — bays with stock counts, robots stationed there.</li>
+        <li>A <strong>Dock</strong> card for unassigned robots (hatched pattern).</li>
+      </ul>
+      <p>Zone cards with robots show a yellow top stripe. Click a robot pill to open its detail page.
+      The map <strong>auto-refreshes every 5 seconds</strong> while you are on this tab.</p>
+    </section>
+
+    <section class="doc-block" id="alerts">
+      <h2>10 · Alerts &amp; live feed</h2>
+      <p>Click <strong>ALERTS</strong> (bell icon, top right) to open the notification panel. Events appear in real time:</p>
+      <ul>
+        <li>New tasks created</li>
+        <li><strong>Pick requests</strong> — when you ask for items from the garage shop</li>
+        <li>Robot pairing started or completed</li>
+        <li>Robot connected / disconnected activity</li>
+      </ul>
+      <p>Inside the panel:</p>
+      <ul>
+        <li><strong>MARK ALL READ</strong> — clears the unread badge without deleting history.</li>
+        <li><strong>CLEAR ALL</strong> — removes every alert from the list.</li>
+        <li>Click an alert to mark it read and jump to the related robot or task.</li>
+      </ul>
+      <p>The green dot on the ALERTS button pulses when the live server feed is connected.</p>
+    </section>
+
+    <section class="doc-block" id="settings">
+      <h2>11 · Settings</h2>
+      <p>Open <strong>Settings</strong> from the account menu. Panels:</p>
+      <ul>
+        <li><strong>General</strong> — organization name in the header.</li>
+        <li><strong>Account</strong> — change username and password (current password required).</li>
+        <li><strong>Appearance</strong> — rename and recolor the four robot status labels.</li>
+        <li><strong>Fleet</strong> — list all robots; pair new ones with a code.</li>
+        <li><strong>Locations</strong> — tree of warehouses, sections, bays, and item counts; add warehouses.</li>
+        <li><strong>Data</strong> — export, import, and clear (see section 13).</li>
+        <li><strong>Security</strong> — login lockout, session timeout, IP allowlist (see section 12).</li>
+        <li><strong>System</strong> — live database statistics.</li>
+        <li><strong>Integration</strong> — HTTP endpoints for robot firmware and external tools.</li>
+      </ul>
+      <p>You can also add warehouses, sections, and bays from the <code>＋</code> chips on the main deck.
+      Deleting a location removes its bays and items. Robots in a deleted section become <strong>Unassigned</strong>, not deleted.</p>
+    </section>
+
+    <section class="doc-block" id="security">
+      <h2>12 · Security</h2>
+      <p>Settings → <strong>Security</strong> controls how staff access the board:</p>
+      <ul>
+        <li><strong>Max failed logins</strong> — after this many wrong passwords, the account is locked temporarily.</li>
+        <li><strong>Lockout duration</strong> — how long the lock lasts (minutes).</li>
+        <li><strong>Session timeout</strong> — hours before an idle login expires.</li>
+        <li><strong>IP allowlist</strong> — optional. Restricts <em>staff browsers</em> to specific IPs or subnets.
+        Robots on your LAN can always reach pairing, heartbeat, and task endpoints regardless of this setting.</li>
+      </ul>
+      <p>Export, import, and clear-all-data actions require your <strong>current password</strong>.
+      Password changes must meet the minimum policy (length + letter + number).</p>
+      <p class="note">If you enable the IP allowlist, add your office subnet (e.g. <code>192.168.4.0/24</code>).
+      Using only <code>127.0.0.1</code> will block other computers on the network from opening the board.</p>
+    </section>
+
+    <section class="doc-block" id="data">
+      <h2>13 · Backup, import &amp; clear</h2>
+      <p>Settings → <strong>Data</strong>:</p>
+      <ul>
+        <li><strong>Export JSON backup</strong> — downloads warehouses, items, robots (without pairing codes), and settings. Tasks and alerts are server-only and are not included.</li>
+        <li><strong>Import JSON backup</strong> — replaces all warehouse data from a file. Requires password. Robots may need to pair again (codes are not in backups).</li>
+        <li><strong>Clear all data</strong> — deletes warehouses, items, robots, tasks, and alerts. Keeps your login and settings. Requires password. ESP32 units show <strong>DISCONNECTED</strong> and must be paired again.</li>
+      </ul>
+      <p>Database file on the server: <code>instance/warehouse.db</code> (SQLite).</p>
+    </section>
+
+    <section class="doc-block" id="esp32">
+      <h2>14 · Physical robot (ESP32)</h2>
+      <p>The ESP32 firmware lives under <code>Arduino/WarehouseDB_&lt;unitId&gt;/</code> — one folder per physical robot (e.g. <code>WarehouseDB_55EF4</code>). No display names in the folder; name the robot when you pair in the app.</p>
+      <h3 class="doc-sub">What the screen shows</h3>
+      <ul>
+        <li><strong>Pairing mode</strong> — 6-digit code, “enter code in app”.</li>
+        <li><strong>Connected</strong> — robot name, <code>ONLINE</code>, idle or task info.</li>
+        <li><strong>Active task</strong> — <code>#8</code>, action name (e.g. <code>PICK</code>), <code>ONLINE</code>.</li>
+        <li><strong>Disconnected</strong> — if removed from the app or database cleared: <code>DISCONNECTED</code> + pairing code.</li>
+        <li><strong>Offline</strong> — server unreachable but still paired; retries automatically.</li>
+      </ul>
+      <h3 class="doc-sub">How it talks to the server</h3>
+      <ul>
+        <li><strong>Heartbeat</strong> — every 1 second (<code>POST /api/robots/&lt;id&gt;/heartbeat</code>). Keeps the robot online in the app.</li>
+        <li><strong>Task poll</strong> — every 5 seconds (<code>GET /api/robots/&lt;id&gt;/tasks</code>). Reads queued work and shows the task ID on screen.</li>
+        <li>Both require header <code>X-Robot-Code: &lt;6 digits&gt;</code>.</li>
+      </ul>
+      <p class="note" id="firmware">Re-upload the Arduino sketch after firmware updates. Bump <code>FIRMWARE_VERSION</code> in <code>config.h</code> when you ship a release — the robot page compares it to <code>Arduino/firmware.json</code> on the server. Edit Wi-Fi SSID, password, and server LAN IP in <code>config.h</code> before the first upload.</p>
+    </section>
+
+    <section class="doc-block" id="api">
+      <h2>15 · Robot API reference</h2>
+      <p>Robots and integrations use HTTP on the same server as the board. Key endpoints:</p>
+      <pre>GET  /api/robots/ping              — health check (no auth)
+POST /api/robots/claim              — robot confirms pairing (body: pairing_code, device_id)
+POST /api/robots/pair               — staff links a code to a name (session login)
+GET  /api/robots/&lt;id&gt;/pair-status   — poll while waiting for robot
+POST /api/robots/&lt;id&gt;/heartbeat     — robot status ping (header: X-Robot-Code)
+GET  /api/robots/&lt;id&gt;/tasks        — robot reads assigned work (header: X-Robot-Code)
+GET  /api/items/&lt;id&gt;                — resolve item → location path
+GET  /api/tree                      — full warehouse hierarchy</pre>
+      <p>Item lookup example — returns <code>location.path</code> ready for navigation:</p>
+      <pre>GET http://localhost:8000/api/items/42</pre>
+      <p>Full technical details: Settings → Integration, and <code>README.md</code> in the project folder.</p>
+    </section>
+  </article>
+</div>
+{% endblock %}

@@ -1,0 +1,89 @@
+# Full platform — warehouse + customer store + floor scan PWA
+#
+#   cd WarehouseDB
+#   cp .env.example .env
+#   docker compose -f docker-compose.all.yml up --build -d
+
+services:
+  warehouse:
+    build:
+      context: ..
+      dockerfile: WarehouseDB/Dockerfile.platform
+    image: warehouse-platform:latest
+    container_name: warehousedb
+    command: ["waitress-serve", "--host=0.0.0.0", "--port=8000", "wsgi:app"]
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me-in-production}
+      HOST: 0.0.0.0
+      PORT: 8000
+      STORE_API_KEY: ${STORE_API_KEY:-store-dev-key}
+      SCAN_API_KEY: ${SCAN_API_KEY:-scan-dev-key}
+      SCAN_PUBLIC_URL: ${SCAN_PUBLIC_URL:-http://localhost:5002}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+    volumes:
+      - warehousedb_data:/app/instance
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+  store:
+    image: warehouse-platform:latest
+    container_name: warehouse-store
+    working_dir: /app/Warehouse_store
+    command: ["sh", "start.sh"]
+    ports:
+      - "${STORE_PORT:-5001}:5001"
+      - "${STORE_API_PORT:-5004}:5004"
+    environment:
+      FLASK_ENV: production
+      STORE_SECRET_KEY: ${STORE_SECRET_KEY:-store-dev-secret}
+      WAREHOUSE_URL: http://warehouse:8000
+      STORE_API_KEY: ${STORE_API_KEY:-store-dev-key}
+      STORE_API_HOST: 0.0.0.0
+      STORE_API_PORT: 5004
+      STORE_PORT: 5001
+      STORE_HOST: 0.0.0.0
+      STORE_BACKEND_URL: http://127.0.0.1:5004
+    depends_on:
+      warehouse:
+        condition: service_healthy
+    volumes:
+      - store_data:/app/Warehouse_store/instance
+    restart: unless-stopped
+
+  scan:
+    image: warehouse-platform:latest
+    container_name: warehouse-scan
+    working_dir: /app/Warehouse_scan
+    command: ["sh", "start.sh"]
+    ports:
+      - "${SCAN_PORT:-5002}:5002"
+      - "${SCAN_API_PORT:-5003}:5003"
+    environment:
+      FLASK_ENV: production
+      SCAN_SECRET_KEY: ${SCAN_SECRET_KEY:-scan-dev-secret}
+      WAREHOUSE_URL: http://warehouse:8000
+      SCAN_API_KEY: ${SCAN_API_KEY:-scan-dev-key}
+      SCAN_BACKEND_URL: http://127.0.0.1:5003
+      SCAN_API_HOST: 0.0.0.0
+      SCAN_API_PORT: 5003
+      SCAN_PORT: 5002
+      SCAN_HOST: 0.0.0.0
+    depends_on:
+      warehouse:
+        condition: service_healthy
+    volumes:
+      - scan_data:/app/Warehouse_scan/instance
+    restart: unless-stopped
+
+volumes:
+  warehousedb_data:
+  store_data:
+  scan_data:

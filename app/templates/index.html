@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div class="app board-page" data-active-view="{{ active_view }}">
+  <header class="masthead">
+    <div class="title-block">
+      <h1>WAREHOUSE<span>DB</span></h1>
+      <p class="sub">{% if org_name %}{{ org_name }}{% else %}/// physical inventory &amp; fleet control{% endif %}</p>
+    </div>
+    <div class="search-wrap">
+      <span class="search-tag">FIND</span>
+      <input id="search" type="search" placeholder="ITEM, SKU, AISLE, OR BAY…" autocomplete="off" />
+    </div>
+    <div class="masthead-actions">
+      {% include "_masthead_actions.html" %}
+    </div>
+  </header>
+
+  <div class="counters" id="counters">
+    <div class="counter"><span class="n">00</span><span class="l">Warehouses</span></div>
+    <div class="counter"><span class="n">00</span><span class="l">Bays</span></div>
+    <div class="counter hot"><span class="n">00</span><span class="l">Items on file</span></div>
+    <div class="counter"><span class="n">00</span><span class="l">Robots</span></div>
+    <div class="counter"><span class="n">00</span><span class="l">Open tasks</span></div>
+  </div>
+
+  <section class="deck">
+    <div class="deck-line">
+      <span class="deck-label">WAREHOUSE</span>
+      <div class="chips" id="wh-row"><span class="deck-empty">Loading warehouses…</span></div>
+    </div>
+    <div class="deck-line">
+      <span class="deck-label">AISLE</span>
+      <div class="chips" id="sec-row"><span class="deck-empty">Loading aisles…</span></div>
+    </div>
+    <div class="deck-line bays-line" id="bays-line">
+      <span class="deck-label">BAYS</span>
+      <div class="bins" id="bin-row"><span class="deck-empty">Loading bays…</span></div>
+    </div>
+  </section>
+
+  <section class="board-head">
+    <div class="view-tabs">
+      <a class="vtab{% if active_view == 'items' %} active{% endif %}" href="{{ url_for('main.board_items') }}" data-view="items"><svg class="ic"><use href="#i-items"/></svg> ITEMS</a>
+      <a class="vtab{% if active_view == 'fleet' %} active{% endif %}" href="{{ url_for('main.board_fleet') }}" data-view="fleet"><svg class="ic"><use href="#i-robot"/></svg> FLEET</a>
+      <a class="vtab{% if active_view == 'tasks' %} active{% endif %}" href="{{ url_for('main.board_tasks') }}" data-view="tasks"><svg class="ic"><use href="#i-tasks"/></svg> TASKS</a>
+      <a class="vtab{% if active_view == 'map' %} active{% endif %}" href="{{ url_for('main.board_map') }}" data-view="map"><svg class="ic"><use href="#i-map"/></svg> MAP</a>
+    </div>
+    <div class="board-meta">
+      <h2 id="board-title">INVENTORY</h2>
+      <span id="board-count" class="board-count"></span>
+    </div>
+  </section>
+  <section class="board" id="board">
+    <div class="view-intro" id="board-static-intro">
+      <span class="view-intro-kicker">Inventory</span>
+      <p class="view-intro-text">Tags for stock in the selected warehouse, aisle, or bay. Click a tag to open details, or use FIND to search by name, SKU, aisle, or bay code.</p>
+    </div>
+    <button type="button" class="create-card create-card--tag" id="shell-new-item">
+      <span class="create-card-plus"><svg class="ic ic-lg"><use href="#i-plus"/></svg></span>
+      <span class="create-card-label">NEW ITEM</span>
+      <span class="create-card-sub">Log stock on a shelf</span>
+    </button>
+    <div id="board-dynamic" aria-live="polite"></div>
+  </section>
+</div>
+
+<!-- Item modal -->
+<div id="modal" class="modal hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="modal-close" aria-label="Close">✕</button>
+    <h2 id="modal-title">NEW ITEM</h2>
+    <form id="item-form" class="form item-edit-form">
+      <label class="sku-field">SKU / NUMBER
+        <div class="sku-field-stack">
+          <input name="sku" id="item-sku-input" autocomplete="off" />
+          <span class="field-hint">Unique product code — auto-assigned if left blank.</span>
+          <button type="button" class="btn btn-line sku-generate-btn" id="item-sku-refresh" title="Generate another SKU"><svg class="ic"><use href="#i-reload"/></svg> GENERATE SKU</button>
+        </div>
+      </label>
+      <label>NAME
+        <input name="name" id="item-name-input" required autocomplete="off" />
+        <span class="field-hint">Product name — enter manually.</span>
+      </label>
+      <label>QUANTITY IN STOCK<input type="number" name="quantity" min="1" value="1" inputmode="numeric" required /></label>
+      <label>SHELF<span id="shelf-select"></span></label>
+      <label>NOTES<textarea name="notes" rows="2" placeholder="optional"></textarea></label>
+      <div id="locate" class="locate hidden"></div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost hidden" id="delete-item">DELETE</button>
+        <button type="submit" class="btn btn-yellow">SAVE</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Robot modal (pairing) — select chassis model, then enter code from robot screen -->
+<div id="robot-modal" class="modal hidden">
+  <div class="modal-card modal-card-wide modal-card--pair">
+    <button class="modal-close" id="robot-close" aria-label="Close">✕</button>
+    <h2 id="robot-title">PAIR ROBOT</h2>
+    <form id="robot-form" class="form">
+      <ol class="pair-steps">
+        <li><strong>Select the robot model</strong> below (tap the matching image)</li>
+        <li>On the physical robot, open <strong>Settings → Pair warehouse</strong></li>
+        <li>Enter the <strong>6-digit code</strong> shown on the robot screen</li>
+      </ol>
+
+      <div class="field-block field-block--hero">
+        <span class="field-label">SELECT ROBOT MODEL</span>
+        <p class="pair-model-lead">Choose the chassis that matches this unit — the fleet board uses its image and name.</p>
+        <input type="hidden" name="unit_image" id="robot-unit-image" value="1" />
+        <div id="robot-unit-picker" class="unit-picker-grid unit-picker-grid--pair" role="listbox" aria-label="Robot model"></div>
+        <p class="unit-pick-selected" id="robot-unit-selected" aria-live="polite">Atlas MK-I · unit-amr-01</p>
+      </div>
+
+      <label>PAIRING CODE (FROM ROBOT)<input name="pairing_code" id="pairing-code-input" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="000000" required autocomplete="off" /></label>
+      <p class="pair-field-error hidden" id="pair-code-error" role="alert"></p>
+
+      <label>HOME BAY
+        <select name="home_bay_id" id="robot-home-bay"></select>
+        <span class="field-hint">Where the robot returns after tasks or to charge — pick a base or add custom.</span>
+      </label>
+      <div id="robot-home-bay-custom" class="hidden field-custom">
+        <label>CUSTOM BASE NAME
+          <input id="robot-home-bay-custom-name" placeholder="e.g. Night charge pad" autocomplete="off" />
+        </label>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn btn-yellow">START PAIRING</button>
+      </div>
+    </form>
+    <div id="robot-wait" class="hidden">
+      <p class="pair-lead">Waiting for the robot…</p>
+      <p class="panel-note">If the robot shows a confirmation prompt, accept it. This screen updates when the unit connects.</p>
+      <div class="pair-code-display" id="wait-code">------</div>
+      <div class="pair-wait-status" id="wait-status">Waiting for robot to respond…</div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="pair-cancel">CANCEL</button>
+      </div>
+    </div>
+    <div id="robot-failed" class="hidden">
+      <p class="pair-lead">Could not connect</p>
+      <p class="panel-note" id="pair-fail-msg">No robot responded with this pairing code. Check the code on the robot screen and try again.</p>
+      <div class="form-actions">
+        <button type="button" class="btn btn-yellow" id="pair-retry">TRY AGAIN</button>
+        <button type="button" class="btn btn-ghost" id="pair-fail-close">CLOSE</button>
+      </div>
+    </div>
+    <div id="robot-paired" class="hidden">
+      <p class="pair-lead">Robot connected</p>
+      <p class="panel-note" id="pair-success-msg"></p>
+      <div class="form-actions">
+        <a class="btn btn-line" id="pair-view" href="#">VIEW ROBOT</a>
+        <button type="button" class="btn btn-yellow" id="pair-done">DONE</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task modal -->
+<div id="task-modal" class="modal hidden">
+  <div class="modal-card modal-card-wide">
+    <button class="modal-close" id="task-close" aria-label="Close">✕</button>
+    <h2 id="task-title">NEW TASK</h2>
+    <p class="panel-note task-modal-note" id="task-assign-hint">Pick action → item → destination. Charging is on the robot page.</p>
+    <form id="task-form" class="form task-form">
+      <div class="add-task-grid add-task-grid--compact">
+        <label class="grid-span-full">ROBOT
+          <select name="robot_id" id="task-robot" required></select>
+          <span class="field-hint" id="task-robot-hint"></span>
+        </label>
+        <label>ACTION
+          <select name="action" id="task-action">
+            <option value="pick">PICK</option>
+            <option value="restock">RESTOCK</option>
+            <option value="move">MOVE</option>
+            <option value="inspect">INSPECT</option>
+          </select>
+          <span class="field-hint" id="task-action-hint"></span>
+        </label>
+        <label id="task-item-wrap"><span id="task-item-label">ITEM</span>
+          <div id="task-item-mount"></div>
+        </label>
+        <label id="task-section-wrap"><span id="task-section-label">WHERE TO GO</span>
+          <div id="task-section-mount"></div>
+          <span class="field-hint hidden" id="task-from-hint"></span>
+        </label>
+        <label id="task-qty-wrap">HOW MANY
+          <input type="number" name="quantity" id="task-qty" class="qty-input" min="1" value="1" inputmode="numeric" required />
+          <span class="field-hint" id="task-qty-hint"></span>
+        </label>
+        <label class="grid-span-full">TAG
+          <div class="task-tag-field" id="task-tag-field">
+            <div class="task-tag-chips"></div>
+            <input type="text" class="task-tag-type" placeholder="e.g. fragile — press Enter to add" autocomplete="off" aria-label="Task tag" />
+            <input type="hidden" name="note" />
+          </div>
+          <span class="field-hint">Add one or more labels — press Enter after each</span>
+        </label>
+      </div>
+      <div id="task-status-display" class="hidden">
+        <div class="task-status-row">
+          <span class="task-status-label">STATUS</span>
+          <span id="task-status-badge" class="task-status"></span>
+        </div>
+        <span class="field-hint">Updates automatically when the robot works on this task</span>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost hidden" id="cancel-task">CANCEL TASK</button>
+        <button type="button" class="btn btn-ghost hidden" id="delete-task">DELETE</button>
+        <button type="submit" class="btn btn-yellow">SAVE</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Generic centered prompt (replaces browser prompt) -->
+<div id="prompt-modal" class="modal hidden">
+  <div class="modal-card">
+    <button class="modal-close" id="prompt-close" aria-label="Close">✕</button>
+    <h2 id="prompt-title">ADD</h2>
+    <form id="prompt-form" class="form">
+      <label><span id="prompt-label">NAME</span>
+        <div class="field-inline field-name-row">
+          <input id="prompt-input" autocomplete="off" />
+          <button type="button" class="btn btn-yellow hidden" id="prompt-refresh" title="Generate another name"><svg class="ic"><use href="#i-reload"/></svg> NEW NAME</button>
+        </div>
+      </label>
+      <div class="form-actions">
+        <button type="button" class="btn btn-ghost" id="prompt-cancel">CANCEL</button>
+        <button type="submit" class="btn btn-yellow">ADD</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Generic centered confirm (replaces browser confirm) -->
+<div id="confirm-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="confirm-title">CONFIRM</h2>
+    <p id="confirm-msg" class="confirm-msg"></p>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="confirm-no">CANCEL</button>
+      <button type="button" class="btn btn-yellow" id="confirm-yes">CONFIRM</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script type="module" src="{{ url_for('static', filename='js/board.js') }}?v=pair-page-1"></script>
+{% endblock %}

@@ -1,0 +1,37 @@
+# WarehouseDB only (native alternative: ./install.sh)
+#
+#   cp .env.example .env
+#   ./install.sh --docker
+#   # or: docker compose up --build -d
+
+services:
+  warehouse:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: warehousedb:latest
+    container_name: warehousedb
+    command: ["waitress-serve", "--host=0.0.0.0", "--port=8000", "wsgi:app"]
+    ports:
+      - "${PORT:-8000}:8000"
+    environment:
+      FLASK_ENV: production
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-change-me-in-production}
+      HOST: 0.0.0.0
+      PORT: 8000
+      STORE_API_KEY: ${STORE_API_KEY:-store-dev-key}
+      SCAN_API_KEY: ${SCAN_API_KEY:-scan-dev-key}
+      SCAN_PUBLIC_URL: ${SCAN_PUBLIC_URL:-http://localhost:5002}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+    volumes:
+      - warehousedb_data:/app/instance
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    restart: unless-stopped
+
+volumes:
+  warehousedb_data:
