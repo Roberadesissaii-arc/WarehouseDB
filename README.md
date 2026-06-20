@@ -35,10 +35,12 @@ The installer pulls in everything else. (Windows is supported for local developm
 
 ## Quick start
 
+**You do not install Python, pip, or anything else first — `./install.sh` installs the whole
+toolchain for you.** Just clone and run it:
+
 ```bash
 git clone https://github.com/Roberadesissaii-arc/WarehouseDB.git
 cd WarehouseDB
-chmod +x install.sh
 ./install.sh
 ```
 
@@ -85,6 +87,10 @@ restart the server; a named tunnel gives you a fixed domain. See
 [deploy/CLOUDFLARE-TUNNEL.md](deploy/CLOUDFLARE-TUNNEL.md).
 
 ## Development (Windows / macOS / Linux)
+
+> For a **server install you do not need this section** — use **Quick start** above, which
+> installs Python for you. These steps are for hacking on the code locally and assume Python
+> is already installed.
 
 Single process — no separate frontend:
 

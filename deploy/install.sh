@@ -40,12 +40,6 @@ done
 
 trap stop_sudo_keepalive EXIT
 
-if [ -t 1 ]; then
-  GREEN=$'\033[1;32m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
-else
-  GREEN=''; BOLD=''; DIM=''; RESET=''
-fi
-
 printf '\n%s' "$GREEN"
 cat <<'ART'
 __      ___   ___ ___ _  _  ___  _   _ ___ ___   ___  ___
@@ -58,16 +52,18 @@ echo "  ${DIM}Inventory & fleet control hub — your warehouse, your control.${R
 echo "  ${DIM}project: $ROOT${RESET}"
 echo
 
+step "System packages & toolchain"
 ensure_sudo
 apt_bootstrap
 install_cloudflared
 
+step "Network port"
 DEFAULT_PORT=8000
 CHOSEN_PORT="$(find_free_port "$DEFAULT_PORT")"
 if [ "$CHOSEN_PORT" != "$DEFAULT_PORT" ]; then
-  echo "==> Using port $CHOSEN_PORT (default $DEFAULT_PORT was busy)"
+  ok "Using port $CHOSEN_PORT (default $DEFAULT_PORT was busy)"
 else
-  echo "==> Using port $CHOSEN_PORT"
+  ok "Using port $CHOSEN_PORT"
 fi
 
 if $USE_DOCKER; then
@@ -81,26 +77,30 @@ if $USE_DOCKER; then
     SECRET="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
     set_env_kv "$ROOT/.env" SECRET_KEY "$SECRET"
   fi
-  echo "==> Starting WarehouseDB with Docker"
+  step "Docker"
+  note "starting WarehouseDB with Docker…"
   sudo docker compose up -d --build
   echo
-  echo "==> Done (Docker). Staff board: http://127.0.0.1:${CHOSEN_PORT}"
-  echo "    logs: docker compose logs -f warehouse"
-  echo "    tunnel: see deploy/CLOUDFLARE-TUNNEL.md"
+  ok "WarehouseDB running (Docker) — http://127.0.0.1:${CHOSEN_PORT}"
+  note "logs: docker compose logs -f warehouse"
+  note "tunnel: see deploy/CLOUDFLARE-TUNNEL.md"
   exit 0
 fi
 
+step "Python environment"
 if [ ! -d "$VENV" ]; then
-  echo "==> Creating virtualenv at $VENV"
+  note "creating virtualenv at $VENV"
   "$PYTHON" -m venv "$VENV"
 fi
-echo "==> Installing Python dependencies"
+note "installing Python dependencies…"
 "$VENV/bin/pip" install --upgrade pip >/dev/null
 "$VENV/bin/pip" install -r requirements.txt
+ok "Python dependencies installed"
 
+step "Configuration"
 mkdir -p "$ROOT/instance"
 if [ ! -f "$ENV_FILE" ]; then
-  echo "==> Generating $ENV_FILE"
+  note "generating $ENV_FILE with a random SECRET_KEY"
   SECRET="$("$VENV/bin/python" -c 'import secrets; print(secrets.token_hex(32))')"
   cat >"$ENV_FILE" <<EOF
 FLASK_ENV=production
@@ -113,29 +113,32 @@ SCAN_PUBLIC_URL=http://localhost:5002
 SESSION_COOKIE_SECURE=false
 EOF
   chmod 600 "$ENV_FILE"
+  ok "Created $ENV_FILE"
 else
-  echo "==> Updating PORT in existing $ENV_FILE"
+  note "updating PORT in existing $ENV_FILE"
   set_env_kv "$ENV_FILE" PORT "$CHOSEN_PORT"
 fi
 
-echo "==> Initialising database"
+step "Database"
+note "initialising SQLite database…"
 set -a
 # shellcheck disable=SC1090
 . "$ENV_FILE"
 set +a
 "$VENV/bin/flask" --app run init-db
+ok "Database ready"
 
 chmod +x "$ROOT/start.sh"
 
+step "Service (auto-start on boot)"
 if $INSTALL_SERVICE; then
   RUN_USER="${SUDO_USER:-$(whoami)}"
   install_systemd warehousedb "$ROOT/deploy/warehousedb.service" "$ROOT" "$RUN_USER"
-  echo "    logs: journalctl -u warehousedb -f"
+  note "logs: journalctl -u warehousedb -f"
 else
-  echo
-  echo "Start manually:"
-  echo "    set -a; . instance/warehousedb.env; set +a"
-  echo "    .venv/bin/waitress-serve --host \$HOST --port \$PORT wsgi:app"
+  note "Start manually:"
+  note "  set -a; . instance/warehousedb.env; set +a"
+  note "  .venv/bin/waitress-serve --host \$HOST --port \$PORT wsgi:app"
 fi
 
 echo

@@ -2,13 +2,28 @@
 # Shared helpers for Ubuntu/Debian installers (sourced, not executed).
 set -euo pipefail
 
+# ── Presentation ──────────────────────────────────────────────────────────────
+if [ -t 1 ]; then
+  GREEN=$'\033[1;32m'; CYAN=$'\033[1;36m'; YELLOW=$'\033[33m'; RED=$'\033[31m'
+  BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
+else
+  GREEN=''; CYAN=''; YELLOW=''; RED=''; BOLD=''; DIM=''; RESET=''
+fi
+
+__STEP=0
+step() { __STEP=$((__STEP + 1)); printf '\n  %s━━━━ Step %d · %s%s\n' "$CYAN" "$__STEP" "$1" "$RESET"; }
+ok()   { printf '    %s✔%s  %s\n' "$GREEN" "$RESET" "$1"; }
+warn() { printf '    %s⚠%s  %s\n' "$YELLOW" "$RESET" "$1"; }
+note() { printf '    %s%s%s\n' "$DIM" "$1" "$RESET"; }
+fail() { printf '    %s✖%s  %s\n' "$RED" "$RESET" "$1" >&2; exit 1; }
+
 SUDO_KEEPALIVE_PID=""
 
 ensure_sudo() {
   if [ "$(id -u)" -eq 0 ]; then
     return
   fi
-  echo "==> Installer needs sudo (system packages + auto-start on boot)."
+  note "Installer needs sudo (system packages + auto-start on boot)."
   sudo -v
   while true; do
     sudo -n true
@@ -24,12 +39,15 @@ stop_sudo_keepalive() {
   fi
 }
 
+# Installs the base toolchain every app needs: Python 3 + venv + pip and friends.
 apt_bootstrap() {
-  echo "==> apt update / upgrade"
+  note "apt update + upgrade (this can take a minute)…"
   sudo apt-get update -qq
   sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq
+  note "installing python3, python3-venv, python3-pip, curl, gnupg…"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq \
     python3 python3-venv python3-pip curl ca-certificates gnupg lsb-release
+  ok "Python $(python3 -V 2>&1 | awk '{print $2}') + pip + venv ready"
 }
 
 port_is_used() {
@@ -76,32 +94,32 @@ set_env_kv() {
 }
 
 install_cloudflared() {
-  echo "==> Installing cloudflared (optional tunnel for a public domain later)"
   if command -v cloudflared >/dev/null 2>&1; then
-    echo "    already installed: $(cloudflared --version 2>/dev/null | head -1)"
+    ok "cloudflared already installed ($(cloudflared --version 2>/dev/null | head -1))"
     return
   fi
+  note "installing cloudflared (optional tunnel for a public domain later)…"
   curl -fsSL https://pkg.cloudflare.com/cloudflare-public-v2.gpg | sudo tee /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
   echo "deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo "${VERSION_CODENAME:-$UBUNTU_CODENAME}") main" \
     | sudo tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
   sudo apt-get update -qq
   if sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq cloudflared; then
-    echo "    cloudflared installed"
+    ok "cloudflared installed"
   else
-    echo "    !! cloudflared apt install failed — see deploy/CLOUDFLARE-TUNNEL.md"
+    warn "cloudflared apt install failed — see deploy/CLOUDFLARE-TUNNEL.md"
   fi
 }
 
 install_docker_engine() {
-  echo "==> Installing Docker"
   if command -v docker >/dev/null 2>&1; then
-    echo "    already installed"
+    ok "Docker already installed"
     return
   fi
+  note "installing Docker engine…"
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq docker.io
   if command -v docker >/dev/null 2>&1; then
     sudo usermod -aG docker "${SUDO_USER:-$USER}" 2>/dev/null || true
-    echo "    Docker installed (log out/in if 'docker' permission denied)"
+    ok "Docker installed (log out/in if 'docker' permission denied)"
   fi
 }
 
@@ -110,24 +128,28 @@ ensure_node() {
     local major
     major="$(node -p 'process.versions.node.split(".")[0]')"
     if [ "$major" -ge 18 ]; then
+      ok "Node.js $(node -v) already installed"
       return
     fi
   fi
-  echo "==> Installing Node.js 22"
+  note "installing Node.js 22 from NodeSource…"
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq nodejs
   if command -v corepack >/dev/null 2>&1; then
     sudo corepack enable
   fi
+  ok "Node.js $(node -v) ready"
 }
 
 ensure_pnpm() {
   if command -v pnpm >/dev/null 2>&1; then
+    ok "pnpm $(pnpm --version) already installed"
     return
   fi
   ensure_node
   corepack enable
   corepack prepare pnpm@9 --activate
+  ok "pnpm $(pnpm --version 2>/dev/null || echo 9) ready"
 }
 
 install_systemd() {
@@ -140,6 +162,5 @@ install_systemd() {
   rm -f "$tmp"
   sudo systemctl daemon-reload
   sudo systemctl enable --now "$name"
-  echo "==> Service $name enabled — starts automatically on boot"
-  echo "    status: systemctl status $name"
+  ok "Service $name enabled — starts now and on every boot"
 }
