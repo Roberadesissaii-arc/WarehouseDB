@@ -113,7 +113,12 @@ def update_account():
         if new_password != confirm:
             raise ValueError("New password and confirmation do not match.")
     username = username.strip()
-    user.update_credentials(session["user_id"], username, new_password)
+    user.update_credentials(
+        session["user_id"], username, new_password,
+        first_name=data.get("first_name"),
+        last_name=data.get("last_name"),
+        email=data.get("email"),
+    )
     session["username"] = username
     return jsonify(ok=True, username=username, password_changed=bool(new_password))
 

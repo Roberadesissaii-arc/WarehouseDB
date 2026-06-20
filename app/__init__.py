@@ -116,7 +116,20 @@ def _register_security(app):
     @app.context_processor
     def inject_globals():
         org_name = ""
+        first_name = last_name = email = ""
         if "user_id" in session:
-            from .models import setting
+            from .models import setting, user
             org_name = setting.get("org_name") or ""
-        return {"org_name": org_name, "current_user": session.get("username")}
+            row = user.get_by_id(session["user_id"])
+            if row:
+                keys = row.keys()
+                first_name = (row["first_name"] if "first_name" in keys else "") or ""
+                last_name = (row["last_name"] if "last_name" in keys else "") or ""
+                email = (row["email"] if "email" in keys else "") or ""
+        return {
+            "org_name": org_name,
+            "current_user": session.get("username"),
+            "current_first_name": first_name,
+            "current_last_name": last_name,
+            "current_email": email,
+        }

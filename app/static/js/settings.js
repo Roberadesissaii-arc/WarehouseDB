@@ -824,6 +824,9 @@ $("#account-form").onsubmit = async (e) => {
   if (policyError) return toast(policyError, true);
 
   const body = {
+    first_name: f.first_name.value.trim(),
+    last_name: f.last_name.value.trim(),
+    email: f.email.value.trim(),
     username: f.username.value.trim(),
     current_password: f.current_password.value,
     new_password: newPassword || undefined,

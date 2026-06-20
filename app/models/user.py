@@ -134,8 +134,12 @@ def resolve_session_username(sess):
     return (row["username"] or "").strip() or None
 
 
-def update_credentials(user_id, username, new_password=None):
-    """Update the username, and the password too if one is provided."""
+def update_credentials(user_id, username, new_password=None, *, first_name=None, last_name=None, email=None):
+    """Update username/profile, and the password too if one is provided.
+
+    Profile fields are only touched when passed (not None), so other callers
+    (e.g. CLI password reset) keep working unchanged.
+    """
     from ..security import validate_password
 
     username = (username or "").strip()
@@ -145,12 +149,32 @@ def update_credentials(user_id, username, new_password=None):
         new_password = new_password.strip() or None
     if new_password:
         validate_password(new_password)
-    db = get_db()
+
+    fields = ["username=?"]
+    params = [username]
+    if first_name is not None:
+        first_name = first_name.strip()
+        if not first_name:
+            raise ValueError("First name is required")
+        fields.append("first_name=?")
+        params.append(first_name)
+    if last_name is not None:
+        last_name = last_name.strip()
+        if not last_name:
+            raise ValueError("Last name is required")
+        fields.append("last_name=?")
+        params.append(last_name)
+    if email is not None:
+        email = email.strip()
+        if "@" not in email or "." not in email.rsplit("@", 1)[-1]:
+            raise ValueError("A valid email address is required")
+        fields.append("email=?")
+        params.append(email)
     if new_password:
-        db.execute(
-            "UPDATE users SET username=?, password_hash=? WHERE id=?",
-            (username, generate_password_hash(new_password), user_id),
-        )
-    else:
-        db.execute("UPDATE users SET username=? WHERE id=?", (username, user_id))
+        fields.append("password_hash=?")
+        params.append(generate_password_hash(new_password))
+    params.append(user_id)
+
+    db = get_db()
+    db.execute(f"UPDATE users SET {', '.join(fields)} WHERE id=?", params)
     db.commit()
