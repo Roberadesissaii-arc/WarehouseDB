@@ -40,8 +40,23 @@ done
 
 trap stop_sudo_keepalive EXIT
 
-echo "==> WarehouseDB install"
-echo "    project: $ROOT"
+if [ -t 1 ]; then
+  GREEN=$'\033[1;32m'; BOLD=$'\033[1m'; DIM=$'\033[2m'; RESET=$'\033[0m'
+else
+  GREEN=''; BOLD=''; DIM=''; RESET=''
+fi
+
+printf '\n%s' "$GREEN"
+cat <<'ART'
+__      ___   ___ ___ _  _  ___  _   _ ___ ___   ___  ___
+\ \    / /_\ | _ \ __| || |/ _ \| | | / __| __| |   \| _ )
+ \ \/\/ / _ \|   / _|| __ | (_) | |_| \__ \ _|  | |) | _ \
+  \_/\_/_/ \_\_|_\___|_||_|\___/ \___/|___/___| |___/|___/
+ART
+printf '%s\n' "$RESET"
+echo "  ${DIM}Inventory & fleet control hub — your warehouse, your control.${RESET}"
+echo "  ${DIM}project: $ROOT${RESET}"
+echo
 
 ensure_sudo
 apt_bootstrap
@@ -124,6 +139,10 @@ else
 fi
 
 echo
-echo "==> Done. Staff board: http://127.0.0.1:${CHOSEN_PORT}"
-echo "    Optional domain tunnel: deploy/CLOUDFLARE-TUNNEL.md"
+echo "  ${GREEN}${BOLD}✓ WarehouseDB ready${RESET}"
+echo
+echo "    ${BOLD}Staff board${RESET}    http://<server-ip>:${CHOSEN_PORT}"
+echo "    ${BOLD}Health${RESET}         http://127.0.0.1:${CHOSEN_PORT}/api/health"
+echo "    ${BOLD}Service${RESET}        systemctl status warehousedb"
+echo "    ${BOLD}Public domain${RESET}  deploy/CLOUDFLARE-TUNNEL.md"
 echo
