@@ -293,6 +293,21 @@ $("#relay-copy")?.addEventListener("click", async () => {
   } catch { toast("Could not copy address", true); }
 });
 
+// Generic "copy this command/text" buttons (e.g. the Add-more-apps installers).
+document.querySelectorAll("[data-copy]").forEach((btn) => {
+  btn.addEventListener("click", async () => {
+    const target = document.querySelector(btn.dataset.copy);
+    const text = target?.textContent?.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      const original = btn.textContent;
+      btn.textContent = "COPIED";
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    } catch { toast("Could not copy", true); }
+  });
+});
+
 function showSection(sec, activeBtn) {
   document.querySelectorAll(".snav[data-sec]").forEach((b) => b.classList.toggle("active", b === activeBtn));
   document.querySelectorAll(".sset").forEach((s) => s.classList.toggle("hidden", s.dataset.sec !== sec));

@@ -131,10 +131,27 @@ def _register_security(app):
                 first_name = (row["first_name"] if "first_name" in keys else "") or ""
                 last_name = (row["last_name"] if "last_name" in keys else "") or ""
                 email = (row["email"] if "email" in keys else "") or ""
+        # Install commands for the sibling apps, scoped to where this server lives
+        # so Store/Scan clone next to WarehouseDB and auto-copy its API keys.
+        _gh = "https://github.com/Roberadesissaii-arc"
+        _parent = os.path.dirname(os.path.dirname(app.root_path))
+        addons = [
+            {
+                "name": "Warehouse Store", "desc": "customer storefront", "dir": "Warehouse_store",
+                "repo": f"{_gh}/Warehouse_store",
+                "cmd": f"cd {_parent} && git clone {_gh}/Warehouse_store.git && cd Warehouse_store && ./install.sh",
+            },
+            {
+                "name": "Warehouse Scan", "desc": "staff floor PWA", "dir": "Warehouse_scan",
+                "repo": f"{_gh}/Warehouse_scan",
+                "cmd": f"cd {_parent} && git clone {_gh}/Warehouse_scan.git && cd Warehouse_scan && ./install.sh",
+            },
+        ]
         return {
             "org_name": org_name,
             "current_user": session.get("username"),
             "current_first_name": first_name,
             "current_last_name": last_name,
             "current_email": email,
+            "addons": addons,
         }

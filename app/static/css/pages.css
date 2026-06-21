@@ -1229,6 +1229,20 @@ label.sku-field { gap: 8px; }
 .relay-status-msg.is-ok { background: #e8f5e9; }
 .relay-status-msg.is-warn { background: var(--yellow); }
 .relay-status-msg.is-blocked { background: #fdecea; }
+
+/* Add more apps (Store / Scan installers) */
+.addons-panel .addon { border: 2.5px solid var(--ink); background: var(--paper); padding: 14px 16px; margin-bottom: 14px; box-shadow: 3px 3px 0 var(--ink); }
+.addon-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.addon-name { font-weight: 900; font-size: 15px; }
+.addon-desc { font-family: "JetBrains Mono", monospace; font-size: 11px; opacity: .6; }
+.addon-repo { margin-left: auto; font-family: "JetBrains Mono", monospace; font-size: 11px; font-weight: 700; }
+.addon-cmd-row { display: flex; align-items: stretch; gap: 8px; }
+.addon-cmd { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; font-family: "JetBrains Mono", monospace; font-size: 12px; background: var(--paper-2); border: 1px solid var(--ink); padding: 9px 11px; }
+.addon-copy { flex: 0 0 auto; align-self: stretch; }
+@media (max-width: 600px) {
+  .addon-cmd-row { flex-direction: column; }
+  .addon-copy { align-self: flex-start; }
+}
 .relay-url-box {
   display: flex;
   flex-wrap: wrap;

@@ -452,6 +452,25 @@
           </form>
         </div>
 
+        <div class="panel addons-panel">
+          <h2>Add more apps</h2>
+          <p class="panel-note">WarehouseDB is the hub. Add the customer <strong>Store</strong> or the staff <strong>Scan</strong> PWA — each installs on this server, gets its own Cloudflare tunnel, and <strong>auto-connects using this warehouse's API keys</strong> (no manual key setup). Copy the command and run it on the server.</p>
+          {% for app in addons %}
+          <div class="addon">
+            <div class="addon-head">
+              <span class="addon-name">{{ app.name }}</span>
+              <span class="addon-desc">— {{ app.desc }}</span>
+              <a class="addon-repo" href="{{ app.repo }}" target="_blank" rel="noopener">GitHub ↗</a>
+            </div>
+            <div class="addon-cmd-row">
+              <code class="addon-cmd" id="addon-cmd-{{ app.dir }}">{{ app.cmd }}</code>
+              <button type="button" class="btn btn-line btn-sm addon-copy" data-copy="#addon-cmd-{{ app.dir }}">COPY</button>
+            </div>
+          </div>
+          {% endfor %}
+          <p class="field-hint">Prefer to do it by hand? Each command just clones the repo next to WarehouseDB and runs its installer — that sibling layout is what lets it copy the keys automatically.</p>
+        </div>
+
         <div class="panel integration-panel">
           <h2>Robot integration</h2>
           <p class="panel-note integration-lead">A real robot connects over HTTP using these endpoints — no extra services. Same server as the board.</p>
