@@ -308,6 +308,20 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
   });
 });
 
+// "Add more apps" — the Install button opens a guided popup with the command.
+const installModal = document.getElementById("install-modal");
+document.querySelectorAll(".addon-install").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const title = document.getElementById("install-title");
+    const cmd = document.getElementById("install-cmd");
+    if (title) title.textContent = "Install " + (btn.dataset.name || "app");
+    if (cmd) cmd.textContent = btn.dataset.cmd || "";
+    installModal?.classList.remove("hidden");
+  });
+});
+document.getElementById("install-close")?.addEventListener("click", () => installModal?.classList.add("hidden"));
+installModal?.addEventListener("click", (e) => { if (e.target === installModal) installModal.classList.add("hidden"); });
+
 function showSection(sec, activeBtn) {
   document.querySelectorAll(".snav[data-sec]").forEach((b) => b.classList.toggle("active", b === activeBtn));
   document.querySelectorAll(".sset").forEach((s) => s.classList.toggle("hidden", s.dataset.sec !== sec));

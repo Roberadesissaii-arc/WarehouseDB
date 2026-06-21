@@ -460,7 +460,7 @@
             <div class="addon-head">
               <span class="addon-name">{{ app.name }}</span>
               <span class="addon-desc">— {{ app.desc }}</span>
-              <a class="addon-repo" href="{{ app.repo }}" target="_blank" rel="noopener">GitHub ↗</a>
+              <button type="button" class="btn btn-yellow btn-sm addon-install" data-name="{{ app.name }}" data-cmd="{{ app.cmd }}">INSTALL →</button>
             </div>
             <div class="addon-cmd-row">
               <code class="addon-cmd" id="addon-cmd-{{ app.dir }}">{{ app.cmd }}</code>
@@ -585,6 +585,26 @@
         <button type="submit" class="btn btn-yellow">CONTINUE</button>
       </div>
     </form>
+  </div>
+</div>
+
+<div id="install-modal" class="modal hidden">
+  <div class="modal-card">
+    <h2 id="install-title">Install</h2>
+    <p class="confirm-msg">Run this one command on the server. It installs the app, gives it its own Cloudflare link, and auto-connects to this warehouse — you'll be asked for your password in the terminal (that stays off the web for safety).</p>
+    <div class="addon-cmd-row">
+      <code class="addon-cmd" id="install-cmd"></code>
+      <button type="button" class="btn btn-line btn-sm" data-copy="#install-cmd">COPY</button>
+    </div>
+    <ol class="install-steps">
+      <li>Open a terminal on this server (or SSH in).</li>
+      <li>Paste the command and press <strong>Enter</strong>.</li>
+      <li>Type your password when it asks, then wait for <strong>“ready”</strong>. It auto-connects — no key setup.</li>
+    </ol>
+    <div class="form-actions">
+      <button type="button" class="btn btn-ghost" id="install-close">CLOSE</button>
+      <button type="button" class="btn btn-yellow" data-copy="#install-cmd">COPY COMMAND</button>
+    </div>
   </div>
 </div>
 {% endblock %}
