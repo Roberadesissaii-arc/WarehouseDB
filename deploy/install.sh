@@ -140,12 +140,29 @@ else
 fi
 
 step "Database"
+DB_FILE="$ROOT/instance/warehouse.db"
 if $RESET_DB; then
   warn "--reset: wiping the existing database for a clean start"
   rm -f "$ROOT"/instance/warehouse.db* 2>/dev/null || true
 fi
-spin_ok "Initialising SQLite database…" "Database ready" \
-  bash -c 'cd "$3"; set -a; . "$1"; set +a; "$2"/bin/flask --app run init-db' _ "$ENV_FILE" "$VENV" "$ROOT"
+# A stray/orphaned process still holding the database (e.g. a previous install
+# that was Ctrl+C'd) would make init-db block forever — terminate it first.
+if [ -e "$DB_FILE" ] && command -v fuser >/dev/null 2>&1 && sudo fuser -s "$DB_FILE" 2>/dev/null; then
+  warn "another process still holds the database — terminating it"
+  sudo fuser -k "$DB_FILE" 2>/dev/null || true
+  sleep 1
+fi
+# Time-bound so a lock can never hang the installer; the schema also initialises
+# on service start, so this is a fast pre-check rather than a hard dependency.
+if spin "Initialising SQLite database…" \
+     timeout --kill-after=5 60 bash -c 'cd "$3"; set -a; . "$1"; set +a; "$2"/bin/flask --app run init-db' _ "$ENV_FILE" "$VENV" "$ROOT"; then
+  ok "Database ready"
+else
+  rm -f "${__SPIN_LOG:-}" 2>/dev/null || true; __SPIN_LOG=""
+  warn "Database init didn't finish — something is still holding ${DB_FILE}."
+  warn "Fix: sudo fuser -k '${DB_FILE}'  (or reboot), then re-run ./install.sh"
+  fail "Could not initialise the database"
+fi
 
 chmod +x "$ROOT/start.sh"
 
