@@ -152,6 +152,14 @@ def seed_if_empty():
     ).fetchone():
         return
 
+    # A real (production) server starts from a clean, empty database. Demo
+    # warehouses/items are only auto-loaded in development; on a server, staff
+    # load them on demand from Settings → Data if they want sample content.
+    import os
+
+    if os.environ.get("FLASK_ENV", "").lower() == "production":
+        return
+
     _insert_sample(db)
 
 

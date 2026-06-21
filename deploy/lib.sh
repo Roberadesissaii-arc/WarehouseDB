@@ -155,17 +155,37 @@ install_cloudflared() {
     ok "cloudflared already installed ($(cloudflared --version 2>/dev/null | head -1))"
     return
   fi
-  if spin "Installing cloudflared (public-tunnel support)…" bash -c '
+  # Try the official apt repo first (clean auto-updates). It doesn't cover every
+  # Ubuntu/Debian codename, so fall back to the static binary from GitHub.
+  if spin "Installing cloudflared (apt)…" bash -c '
       set -e
       curl -fsSL https://pkg.cloudflare.com/cloudflare-public-v2.gpg | sudo tee /usr/share/keyrings/cloudflare-public-v2.gpg >/dev/null
       echo "deb [signed-by=/usr/share/keyrings/cloudflare-public-v2.gpg] https://pkg.cloudflare.com/cloudflared $(. /etc/os-release && echo "${VERSION_CODENAME:-$UBUNTU_CODENAME}") main" | sudo tee /etc/apt/sources.list.d/cloudflared.list >/dev/null
       sudo apt-get update -qq
       sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq cloudflared
-    '; then
-    ok "cloudflared installed"
+    ' && command -v cloudflared >/dev/null 2>&1; then
+    ok "cloudflared installed ($(cloudflared --version 2>/dev/null | head -1))"
+    return
+  fi
+  rm -f "${__SPIN_LOG:-}" 2>/dev/null || true; __SPIN_LOG=""
+  # apt repo has no package for this distro/codename — install the static binary.
+  sudo rm -f /etc/apt/sources.list.d/cloudflared.list 2>/dev/null || true
+  local cf_arch
+  case "$(uname -m)" in
+    x86_64|amd64) cf_arch=amd64 ;;
+    aarch64|arm64) cf_arch=arm64 ;;
+    armv7l|armhf) cf_arch=arm ;;
+    *) cf_arch=amd64 ;;
+  esac
+  if spin "Installing cloudflared (direct ${cf_arch} binary)…" bash -c "
+      set -e
+      sudo curl -fsSL 'https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${cf_arch}' -o /usr/local/bin/cloudflared
+      sudo chmod +x /usr/local/bin/cloudflared
+    " && command -v cloudflared >/dev/null 2>&1; then
+    ok "cloudflared installed ($(cloudflared --version 2>/dev/null | head -1))"
   else
     rm -f "${__SPIN_LOG:-}" 2>/dev/null || true; __SPIN_LOG=""
-    warn "cloudflared install failed — see deploy/CLOUDFLARE-TUNNEL.md (tunnels optional)"
+    warn "cloudflared install failed — relay/tunnel will stay off (see deploy/CLOUDFLARE-TUNNEL.md)"
   fi
 }
 
