@@ -21,7 +21,10 @@ _TUNNEL_URL_RE = re.compile(r"https://[a-zA-Z0-9-]+\.trycloudflare\.com")
 _HOSTNAME_RE = re.compile(r"^\s*hostname:\s*(\S+)\s*$", re.MULTILINE)
 _DEFAULT_TUNNEL_NAME = "warehouse"
 
-_lock = threading.Lock()
+# Reentrant: start() holds the lock and calls _spawn() -> stop(), which re-acquires
+# it on the same thread. A plain Lock would deadlock (hanging the web server at boot
+# when the relay is enabled).
+_lock = threading.RLock()
 _proc: subprocess.Popen | None = None
 _reader: threading.Thread | None = None
 _state = {
