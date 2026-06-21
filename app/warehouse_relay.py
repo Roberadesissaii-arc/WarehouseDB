@@ -67,7 +67,13 @@ def cloudflared_installed() -> bool:
     return cloudflared_bin() is not None
 
 
+_version_cache: str | None = None
+
+
 def cloudflared_version() -> str | None:
+    global _version_cache
+    if _version_cache:
+        return _version_cache
     binary = cloudflared_bin()
     if not binary:
         return None
@@ -80,13 +86,20 @@ def cloudflared_version() -> str | None:
             check=False,
         )
         line = (out.stdout or out.stderr or "").strip().splitlines()
-        return line[0] if line else None
+        _version_cache = line[0] if line else None
+        return _version_cache
     except (OSError, subprocess.TimeoutExpired):
         return None
 
 
 def _config_dir() -> Path:
-    return Path.home() / ".cloudflared"
+    # Path.home() raises RuntimeError when HOME can't be resolved (can happen
+    # under systemd). Fall back to $HOME / the user's home so status never 500s.
+    try:
+        home = Path.home()
+    except RuntimeError:
+        home = Path(os.environ.get("HOME") or os.path.expanduser("~") or "/root")
+    return home / ".cloudflared"
 
 
 def _tunnel_name() -> str:
