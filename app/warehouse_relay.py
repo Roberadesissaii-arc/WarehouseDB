@@ -34,16 +34,46 @@ _state = {
 }
 
 
+_CLOUDFLARED_CANDIDATES = (
+    "/usr/local/bin/cloudflared",
+    "/usr/bin/cloudflared",
+    "/bin/cloudflared",
+    "/snap/bin/cloudflared",
+)
+
+
+def cloudflared_bin() -> str | None:
+    """Absolute path to the cloudflared binary, or None if not found.
+
+    A systemd service runs with a minimal PATH that usually excludes
+    ``~/.local/bin``, so after checking PATH we also probe well-known
+    install locations — otherwise the relay reports "not installed" even
+    though cloudflared exists on the machine.
+    """
+    found = shutil.which("cloudflared")
+    if found:
+        return found
+    candidates = [
+        *_CLOUDFLARED_CANDIDATES,
+        os.path.join(os.path.expanduser("~"), ".local", "bin", "cloudflared"),
+    ]
+    for path in candidates:
+        if os.path.isfile(path) and os.access(path, os.X_OK):
+            return path
+    return None
+
+
 def cloudflared_installed() -> bool:
-    return shutil.which("cloudflared") is not None
+    return cloudflared_bin() is not None
 
 
 def cloudflared_version() -> str | None:
-    if not cloudflared_installed():
+    binary = cloudflared_bin()
+    if not binary:
         return None
     try:
         out = subprocess.run(
-            ["cloudflared", "--version"],
+            [binary, "--version"],
             capture_output=True,
             text=True,
             timeout=8,
@@ -184,7 +214,8 @@ def start() -> None:
     with _lock:
         if _proc and _proc.poll() is None:
             return
-        if not cloudflared_installed():
+        binary = cloudflared_bin()
+        if not binary:
             _reset_runtime("cloudflared is not installed — run deploy/install.sh or install it manually")
             return
 
@@ -194,13 +225,13 @@ def start() -> None:
             host = _named_hostname(name)
             fixed = f"https://{host}" if host else None
             _state["tunnel_name"] = name
-            _spawn("named", ["cloudflared", "tunnel", "run", name, "--no-autoupdate"], fixed_url=fixed)
+            _spawn("named", [binary, "tunnel", "run", name, "--no-autoupdate"], fixed_url=fixed)
             return
 
         _state["tunnel_name"] = None
         _spawn(
             "quick",
-            ["cloudflared", "tunnel", "--url", target, "--no-autoupdate"],
+            [binary, "tunnel", "--url", target, "--no-autoupdate"],
             fixed_url=None,
         )
 

@@ -153,6 +153,13 @@ set_env_kv() {
 install_cloudflared() {
   if command -v cloudflared >/dev/null 2>&1; then
     ok "cloudflared already installed ($(cloudflared --version 2>/dev/null | head -1))"
+    # systemd services run with a minimal PATH (no ~/.local/bin). Make sure the
+    # binary is reachable from /usr/local/bin so the relay can find it.
+    local cf; cf="$(command -v cloudflared)"
+    if [ "$cf" != "/usr/local/bin/cloudflared" ] && [ ! -x /usr/bin/cloudflared ]; then
+      sudo ln -sf "$cf" /usr/local/bin/cloudflared 2>/dev/null \
+        && note "linked cloudflared into /usr/local/bin (for the service)" || true
+    fi
     return
   fi
   # Try the official apt repo first (clean auto-updates). It doesn't cover every
