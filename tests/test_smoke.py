@@ -127,7 +127,7 @@ class AppSmokeTests(unittest.TestCase):
         self.assertIn("enabled", data)
         self.assertIn("installed", data)
         self.assertIn("url", data)
-        self.assertFalse(data["enabled"])
+        self.assertTrue(data["enabled"])  # relay is on by default
         settings = self.client.get("/api/settings")
         self.assertIn("relay", settings.get_json())
         enabled = self.client.put("/api/settings", json={"relay": {"enabled": True}})

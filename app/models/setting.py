@@ -38,7 +38,9 @@ DEFAULTS = {
     "notify_mobile": "0",
     "notify_kinds": json.dumps({"fleet": True, "store": True, "system": True}),
     "fleet_assign_backlog_on_pair": "0",
-    "relay_enabled": "0",
+    # Public relay is on by default so a fresh server is reachable from anywhere
+    # right away (login still required). Turn it off in Settings → Integration.
+    "relay_enabled": "1",
 }
 
 NOTIFY_SOUNDS = ("chime", "beep", "ding", "alert")
