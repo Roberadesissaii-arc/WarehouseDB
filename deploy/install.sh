@@ -145,13 +145,7 @@ if $RESET_DB; then
   warn "--reset: wiping the existing database for a clean start"
   rm -f "$ROOT"/instance/warehouse.db* 2>/dev/null || true
 fi
-# A stray/orphaned process still holding the database (e.g. a previous install
-# that was Ctrl+C'd) would make init-db block forever — terminate it first.
-if [ -e "$DB_FILE" ] && command -v fuser >/dev/null 2>&1 && sudo fuser -s "$DB_FILE" 2>/dev/null; then
-  warn "another process still holds the database — terminating it"
-  sudo fuser -k "$DB_FILE" 2>/dev/null || true
-  sleep 1
-fi
+free_database "$DB_FILE"
 # Time-bound so a lock can never hang the installer; the schema also initialises
 # on service start, so this is a fast pre-check rather than a hard dependency.
 if spin "Initialising SQLite database…" \

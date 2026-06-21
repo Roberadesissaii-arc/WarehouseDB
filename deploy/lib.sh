@@ -103,8 +103,22 @@ apt_bootstrap() {
   spin_ok "Updating + upgrading system packages…" "System packages up to date" \
     bash -c 'sudo apt-get update -qq && sudo DEBIAN_FRONTEND=noninteractive apt-get upgrade -y -qq'
   spin_ok "Installing Python, pip, venv, curl, gnupg…" "Base toolchain installed" \
-    bash -c 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-venv python3-pip curl ca-certificates gnupg lsb-release'
+    bash -c 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y -qq python3 python3-venv python3-pip curl ca-certificates gnupg lsb-release psmisc'
   ok "Python $(python3 -V 2>&1 | awk '{print $2}') ready"
+}
+
+# Free a SQLite db file held by a stray/orphaned process (e.g. a previous install
+# that was Ctrl+C'd), so init-db can't deadlock waiting for the lock. psmisc
+# (installed above) provides fuser; without it this is a safe no-op.
+free_database() {
+  local dbfile=$1
+  [ -e "$dbfile" ] || return 0
+  command -v fuser >/dev/null 2>&1 || return 0
+  if sudo fuser -s "$dbfile" 2>/dev/null; then
+    warn "another process still holds the database — terminating it"
+    sudo fuser -k "$dbfile" 2>/dev/null || true
+    sleep 1
+  fi
 }
 
 port_is_used() {
