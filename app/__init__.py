@@ -34,8 +34,13 @@ def create_app(config_object=None):
         user.ensure_default_admin()
         setting.ensure_defaults()
         database.seed_if_empty()
-        from . import warehouse_relay
-        warehouse_relay.sync_with_settings()
+        # Schema-only CLI commands (flask init-db) must run fast and exit cleanly,
+        # so they must NOT launch the cloudflared tunnel (a long-lived subprocess
+        # that would keep the short-lived process from exiting). The actual server
+        # starts the relay normally.
+        if os.environ.get("WAREHOUSE_SKIP_RELAY") != "1":
+            from . import warehouse_relay
+            warehouse_relay.sync_with_settings()
 
     _register_security(app)
 

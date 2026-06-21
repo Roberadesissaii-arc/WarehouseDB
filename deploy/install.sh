@@ -149,7 +149,7 @@ free_database "$DB_FILE"
 # Time-bound so a lock can never hang the installer; the schema also initialises
 # on service start, so this is a fast pre-check rather than a hard dependency.
 if spin "Initialising SQLite database…" \
-     timeout --kill-after=5 60 bash -c 'cd "$3"; set -a; . "$1"; set +a; "$2"/bin/flask --app run init-db' _ "$ENV_FILE" "$VENV" "$ROOT"; then
+     timeout --kill-after=5 60 bash -c 'cd "$3"; set -a; . "$1"; set +a; WAREHOUSE_SKIP_RELAY=1 "$2"/bin/flask --app run init-db' _ "$ENV_FILE" "$VENV" "$ROOT"; then
   ok "Database ready"
 else
   rm -f "${__SPIN_LOG:-}" 2>/dev/null || true; __SPIN_LOG=""
