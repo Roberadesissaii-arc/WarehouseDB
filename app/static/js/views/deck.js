@@ -35,10 +35,9 @@ export async function delEntity(table, id, confirmMsg) {
 }
 
 export function renderDeck() {
-  const deck = document.querySelector(".deck");
-  if (deck) deck.style.display = store.view === "items" ? "" : "none";
-  if (store.view !== "items") return;
-
+  // The location deck (warehouse / aisle / bays) stays visible on every view —
+  // it's a persistent navigator, not items-only, so switching tabs (Items /
+  // Fleet / Tasks / Map) no longer makes it pop in and out.
   const whRow = $("#wh-row"); whRow.innerHTML = "";
   for (const w of store.tree) {
     const c = el("button", "chip" + (w.id == store.sel.w ? " active" : ""), `${esc(w.name)}<span class="x" title="Delete">✕</span>`);
@@ -95,5 +94,5 @@ export function renderDeck() {
     binRow.innerHTML = `<span class="deck-empty">— add a section first —</span>`;
   }
 
-  $("#bays-line").style.display = store.view === "items" ? "" : "none";
+  $("#bays-line").style.display = "";
 }

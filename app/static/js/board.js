@@ -43,7 +43,7 @@ function renderView() {
 function showLoadingShell() {
   setItemsShellVisible(store.view === "items");
   renderCountersSkeleton();
-  renderDeckSkeleton(store.view);
+  renderDeckSkeleton();
   renderBoardSkeleton(store.view);
 }
 

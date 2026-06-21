@@ -88,14 +88,15 @@ const COUNTER_SKELS = [
   { hot: false, labelW: 76 },
 ];
 
-/** Navigation deck — warehouse / aisle chips + bay tiles (items view only). */
-export function renderDeckSkeleton(view = "items") {
+/** Navigation deck skeleton — warehouse / aisle chips + bay tiles (shown on every view). */
+export function renderDeckSkeleton() {
+  // The deck is a persistent navigator shown on every view, so always render
+  // its loading skeleton (no view gating).
   const deck = document.querySelector(".deck");
   if (deck) {
     deck.classList.add("deck--loading");
-    deck.style.display = view === "items" ? "" : "none";
+    deck.style.display = "";
   }
-  if (view !== "items") return;
 
   $("#wh-row").innerHTML =
     `<div class="skel skel-chip skel-chip-wh"></div>` +
@@ -113,16 +114,11 @@ export function renderDeckSkeleton(view = "items") {
   const baysLine = $("#bays-line");
   const binRow = $("#bin-row");
   if (baysLine && binRow) {
-    if (view === "items") {
-      baysLine.style.display = "";
-      binRow.innerHTML =
-        `<div class="skel skel-bin skel-bin-all"></div>` +
-        repeat(4, () => `<div class="skel skel-bin"></div>`) +
-        `<div class="skel skel-chip skel-chip-add skel-chip-add-bin"></div>`;
-    } else {
-      baysLine.style.display = "none";
-      binRow.innerHTML = "";
-    }
+    baysLine.style.display = "";
+    binRow.innerHTML =
+      `<div class="skel skel-bin skel-bin-all"></div>` +
+      repeat(4, () => `<div class="skel skel-bin"></div>`) +
+      `<div class="skel skel-chip skel-chip-add skel-chip-add-bin"></div>`;
   }
 }
 
