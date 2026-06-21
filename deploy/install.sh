@@ -5,6 +5,7 @@
 #   ./install.sh              # deps + venv + DB + systemd (auto-start on boot)
 #   ./install.sh --no-service # install only, start manually
 #   ./install.sh --docker     # Docker instead of native venv
+#   ./install.sh --reset      # wipe the database, then reinstall fresh
 #
 set -euo pipefail
 
@@ -18,9 +19,10 @@ VENV="$ROOT/.venv"
 ENV_FILE="$ROOT/instance/warehousedb.env"
 INSTALL_SERVICE=true
 USE_DOCKER=false
+RESET_DB=false
 
 usage() {
-  sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'
 }
 
 while [ $# -gt 0 ]; do
@@ -28,6 +30,7 @@ while [ $# -gt 0 ]; do
     --service) INSTALL_SERVICE=true ;;
     --no-service) INSTALL_SERVICE=false ;;
     --docker) USE_DOCKER=true ;;
+    --reset) RESET_DB=true ;;
     -h|--help) usage; exit 0 ;;
     *)
       echo "Unknown option: $1" >&2
@@ -58,6 +61,7 @@ echo
 
 step "System packages & toolchain"
 ensure_sudo
+stop_service_if_running warehousedb
 apt_bootstrap
 install_cloudflared
 
@@ -136,13 +140,12 @@ else
 fi
 
 step "Database"
-note "initialising SQLite database…"
-set -a
-# shellcheck disable=SC1090
-. "$ENV_FILE"
-set +a
-"$VENV/bin/flask" --app run init-db
-ok "Database ready"
+if $RESET_DB; then
+  warn "--reset: wiping the existing database for a clean start"
+  rm -f "$ROOT"/instance/warehouse.db* 2>/dev/null || true
+fi
+spin_ok "Initialising SQLite database…" "Database ready" \
+  bash -c 'cd "$3"; set -a; . "$1"; set +a; "$2"/bin/flask --app run init-db' _ "$ENV_FILE" "$VENV" "$ROOT"
 
 chmod +x "$ROOT/start.sh"
 

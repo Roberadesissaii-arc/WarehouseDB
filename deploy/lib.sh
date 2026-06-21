@@ -232,6 +232,19 @@ ensure_pnpm() {
   ok "pnpm $(pnpm --version 2>/dev/null || echo 9) ready"
 }
 
+# Stop a running instance of this service before reinstalling, so it doesn't
+# keep holding its port or an open lock on the SQLite database (which makes
+# `init-db` hang). Safe when the service isn't installed or isn't running.
+stop_service_if_running() {
+  local name=$1
+  command -v systemctl >/dev/null 2>&1 || return 0
+  if systemctl is-active --quiet "$name" 2>/dev/null; then
+    note "stopping running ${name} (frees its port + unlocks the database)…"
+    sudo systemctl stop "$name" 2>/dev/null || true
+    sleep 1
+  fi
+}
+
 install_systemd() {
   local name=$1 template=$2 root=$3 user=$4
   shift 4
