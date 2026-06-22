@@ -26,4 +26,4 @@ def _integrity(err):
 
 
 # Import route modules to register them on `bp` (kept last to avoid circular imports).
-from . import home_bays, auth, bootstrap, firmware, health, items, locations, notifications, organization, relay, robots, settings, store, system, tasks  # noqa: E402,F401
+from . import addons, home_bays, auth, bootstrap, firmware, health, items, locations, notifications, organization, relay, robots, settings, store, system, tasks  # noqa: E402,F401

@@ -308,19 +308,59 @@ document.querySelectorAll("[data-copy]").forEach((btn) => {
   });
 });
 
-// "Add more apps" — the Install button opens a guided popup with the command.
+// "Add more apps" — Install runs a no-root background install and shows progress.
 const installModal = document.getElementById("install-modal");
+let installPoll = null;
+function stopInstallPoll() { if (installPoll) { clearInterval(installPoll); installPoll = null; } }
+
+async function pollInstall(id) {
+  let s;
+  try { s = await api.get(`/api/addons/${id}/status`); } catch { return; }
+  if (!s) return;
+  const msg = document.getElementById("install-msg");
+  const open = document.getElementById("install-open");
+  const spin = document.getElementById("install-spinner");
+  if (s.state === "done") {
+    stopInstallPoll();
+    spin?.classList.add("hidden");
+    if (msg) msg.textContent = "✓ Installed and running.";
+    if (open && s.url) { open.href = s.url; open.classList.remove("hidden"); }
+  } else if (s.state === "error") {
+    stopInstallPoll();
+    spin?.classList.add("hidden");
+    if (msg) msg.textContent = "Couldn't auto-install: " + (s.message || "error") + " — use the manual command below.";
+  } else if (msg) {
+    msg.textContent = s.message || "Installing…";
+  }
+}
+
 document.querySelectorAll(".addon-install").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    const title = document.getElementById("install-title");
-    const cmd = document.getElementById("install-cmd");
-    if (title) title.textContent = "Install " + (btn.dataset.name || "app");
-    if (cmd) cmd.textContent = btn.dataset.cmd || "";
+  btn.addEventListener("click", async () => {
+    const id = btn.dataset.id;
+    document.getElementById("install-title").textContent = "Install " + (btn.dataset.name || "app");
+    document.getElementById("install-cmd").textContent = btn.dataset.cmd || "";
+    const msg = document.getElementById("install-msg");
+    const open = document.getElementById("install-open");
+    const spin = document.getElementById("install-spinner");
+    if (open) { open.classList.add("hidden"); open.href = "#"; }
+    spin?.classList.remove("hidden");
+    if (msg) msg.textContent = "Starting…";
     installModal?.classList.remove("hidden");
+    if (!id) return;
+    try {
+      await api.send("POST", `/api/addons/${id}/install`, {});
+    } catch (err) {
+      if (msg) msg.textContent = "Could not start: " + (err?.message || "error") + " — use the manual command below.";
+      spin?.classList.add("hidden");
+      return;
+    }
+    stopInstallPoll();
+    installPoll = setInterval(() => pollInstall(id), 2000);
+    pollInstall(id);
   });
 });
-document.getElementById("install-close")?.addEventListener("click", () => installModal?.classList.add("hidden"));
-installModal?.addEventListener("click", (e) => { if (e.target === installModal) installModal.classList.add("hidden"); });
+document.getElementById("install-close")?.addEventListener("click", () => { stopInstallPoll(); installModal?.classList.add("hidden"); });
+installModal?.addEventListener("click", (e) => { if (e.target === installModal) { stopInstallPoll(); installModal.classList.add("hidden"); } });
 
 function showSection(sec, activeBtn) {
   document.querySelectorAll(".snav[data-sec]").forEach((b) => b.classList.toggle("active", b === activeBtn));

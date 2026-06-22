@@ -464,7 +464,7 @@
             <div class="addon-cmd-row">
               <code class="addon-cmd" id="addon-cmd-{{ app.dir }}">{{ app.cmd }}</code>
               <button type="button" class="btn btn-line btn-sm addon-copy" data-copy="#addon-cmd-{{ app.dir }}">COPY</button>
-              <button type="button" class="btn btn-yellow btn-sm addon-install" data-name="{{ app.name }}" data-cmd="{{ app.cmd }}">INSTALL</button>
+              <button type="button" class="btn btn-yellow btn-sm addon-install" data-id="{{ app.id }}" data-name="{{ app.name }}" data-cmd="{{ app.cmd }}">INSTALL</button>
             </div>
           </div>
           {% endfor %}
@@ -591,19 +591,21 @@
 <div id="install-modal" class="modal hidden">
   <div class="modal-card">
     <h2 id="install-title">Install</h2>
-    <p class="confirm-msg">Run this one command on the server. It installs the app, gives it its own Cloudflare link, and auto-connects to this warehouse — you'll be asked for your password in the terminal (that stays off the web for safety).</p>
-    <div class="addon-cmd-row">
-      <code class="addon-cmd" id="install-cmd"></code>
-      <button type="button" class="btn btn-line btn-sm" data-copy="#install-cmd">COPY</button>
+    <div class="install-status" id="install-status">
+      <span class="install-spinner" id="install-spinner" aria-hidden="true"></span>
+      <p class="confirm-msg" id="install-msg">Starting…</p>
     </div>
-    <ol class="install-steps">
-      <li>Open a terminal on this server (or SSH in).</li>
-      <li>Paste the command and press <strong>Enter</strong>.</li>
-      <li>Type your password when it asks, then wait for <strong>“ready”</strong>. It auto-connects — no key setup.</li>
-    </ol>
+    <a class="btn btn-yellow install-open hidden" id="install-open" target="_blank" rel="noopener" href="#">OPEN APP →</a>
+    <details class="install-manual">
+      <summary>Prefer to run it yourself, or auto-install failed?</summary>
+      <p class="confirm-msg">Run this on the server — it asks for your password in the terminal:</p>
+      <div class="addon-cmd-row">
+        <code class="addon-cmd" id="install-cmd"></code>
+        <button type="button" class="btn btn-line btn-sm" data-copy="#install-cmd">COPY</button>
+      </div>
+    </details>
     <div class="form-actions">
       <button type="button" class="btn btn-ghost" id="install-close">CLOSE</button>
-      <button type="button" class="btn btn-yellow" data-copy="#install-cmd">COPY COMMAND</button>
     </div>
   </div>
 </div>

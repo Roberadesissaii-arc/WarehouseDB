@@ -137,12 +137,12 @@ def _register_security(app):
         _parent = os.path.dirname(os.path.dirname(app.root_path))
         addons = [
             {
-                "name": "Warehouse Store", "desc": "customer storefront", "dir": "Warehouse_store",
+                "id": "store", "name": "Warehouse Store", "desc": "customer storefront", "dir": "Warehouse_store",
                 "repo": f"{_gh}/Warehouse_store",
                 "cmd": f"cd {_parent} && git clone {_gh}/Warehouse_store.git && cd Warehouse_store && ./install.sh",
             },
             {
-                "name": "Warehouse Scan", "desc": "staff floor PWA", "dir": "Warehouse_scan",
+                "id": "scan", "name": "Warehouse Scan", "desc": "staff floor PWA", "dir": "Warehouse_scan",
                 "repo": f"{_gh}/Warehouse_scan",
                 "cmd": f"cd {_parent} && git clone {_gh}/Warehouse_scan.git && cd Warehouse_scan && ./install.sh",
             },

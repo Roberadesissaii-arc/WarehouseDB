@@ -165,6 +165,9 @@ if $INSTALL_SERVICE; then
   RUN_USER="${SUDO_USER:-$(whoami)}"
   install_systemd warehousedb "$ROOT/deploy/warehousedb.service" "$ROOT" "$RUN_USER"
   note "logs: journalctl -u warehousedb -f"
+  # Let per-user services survive reboots — used by Store/Scan when installed from
+  # the Integration page's INSTALL button (which runs without root).
+  sudo loginctl enable-linger "$RUN_USER" >/dev/null 2>&1 && note "user-service lingering enabled for $RUN_USER" || true
 else
   note "Start manually:"
   note "  set -a; . instance/warehousedb.env; set +a"

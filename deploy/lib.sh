@@ -266,6 +266,43 @@ stop_service_if_running() {
   fi
 }
 
+# Run an app as a per-user systemd service — NO root. Used by the web-triggered
+# "Install" button in WarehouseDB. Needs lingering (enabled by WarehouseDB's
+# terminal install) to survive reboots; falls back to a detached process if the
+# user systemd bus isn't reachable, so the app at least runs immediately.
+install_user_service() {
+  local name=$1 root=$2 venv=$3
+  local udir="$HOME/.config/systemd/user"
+  mkdir -p "$udir"
+  cat >"$udir/${name}.service" <<EOF
+[Unit]
+Description=${name} (Warehouse add-on)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=${root}
+EnvironmentFile=-${root}/.env.local
+EnvironmentFile=-${root}/.env
+EnvironmentFile=-${root}/instance/install.env
+Environment=PATH=${venv}/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=${root}/start.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+  export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+  if systemctl --user daemon-reload 2>/dev/null && systemctl --user enable --now "$name" 2>/dev/null; then
+    echo "    user service ${name} started (auto-starts on boot)"
+    return 0
+  fi
+  echo "    user systemd not available — starting ${name} in the background"
+  ( cd "$root" && setsid nohup ./start.sh >"$root/instance/run.log" 2>&1 & ) || true
+}
+
 install_systemd() {
   local name=$1 template=$2 root=$3 user=$4
   shift 4
