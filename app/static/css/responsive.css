@@ -82,6 +82,8 @@
   .masthead-actions { width: 100%; flex-wrap: wrap; }
   .masthead-actions > .account, .masthead-actions > .notif-wrap { flex: 1 1 0; }
   .masthead-actions > .account .account-btn, .masthead-actions > .notif-wrap .notif-btn { width: 100%; }
+  /* phones: show only a few characters of the username, then an ellipsis */
+  .account-name { max-width: 9ch; }
   /* detail pages: title + BACK on row 1; account + alerts on row 2 with clear gap */
   .masthead--detail { padding: 16px; row-gap: 12px; column-gap: 10px; }
   .masthead--detail .title-block { padding-right: 0; }

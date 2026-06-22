@@ -1,5 +1,5 @@
 <div class="account">
-  <button class="btn btn-line account-btn" id="account-btn" type="button"><svg class="ic"><use href="#i-account"/></svg> {{ current_user }} <span class="caret-dn">▼</span></button>
+  <button class="btn btn-line account-btn" id="account-btn" type="button"><svg class="ic"><use href="#i-account"/></svg> <span class="account-name" title="{{ current_user }}">{{ current_user }}</span> <span class="caret-dn">▼</span></button>
   <div class="account-menu hidden" id="account-menu">
     <div class="account-head"><span class="lbl">SIGNED IN AS</span><span class="who">{{ current_user }}</span></div>
     <a href="{{ url_for('main.settings') }}"><svg class="ic"><use href="#i-setting"/></svg> Settings</a>

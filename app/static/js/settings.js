@@ -872,6 +872,8 @@ $("#account-form").onsubmit = async (e) => {
       document.body.dataset.warehouseUser = res.username;
       const who = document.querySelector(".account-head .who");
       if (who) who.textContent = res.username;
+      const navName = document.querySelector(".account-name");
+      if (navName) { navName.textContent = res.username; navName.title = res.username; }
     }
     toast(res.password_changed ? "Password updated — use the new password next time you sign in" : "Account updated");
   } catch (err) { toast(err.message, true); }
