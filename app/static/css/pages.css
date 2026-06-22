@@ -1235,7 +1235,7 @@ label.sku-field { gap: 8px; }
 .addon-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
 .addon-name { font-weight: 900; font-size: 15px; }
 .addon-desc { font-family: "JetBrains Mono", monospace; font-size: 11px; opacity: .6; }
-.addon-install { margin-left: auto; align-self: center; flex-shrink: 0; }
+.addon-install { flex: 0 0 auto; align-self: stretch; }
 .install-steps { margin: 14px 0 6px; padding-left: 22px; font-size: 13px; line-height: 1.7; }
 .install-steps li { margin-bottom: 4px; }
 #install-cmd { white-space: nowrap; }
@@ -1244,7 +1244,7 @@ label.sku-field { gap: 8px; }
 .addon-copy { flex: 0 0 auto; align-self: stretch; }
 @media (max-width: 600px) {
   .addon-cmd-row { flex-direction: column; }
-  .addon-copy { align-self: flex-start; }
+  .addon-copy, .addon-install { align-self: flex-start; }
 }
 .relay-url-box {
   display: flex;

@@ -460,11 +460,11 @@
             <div class="addon-head">
               <span class="addon-name">{{ app.name }}</span>
               <span class="addon-desc">— {{ app.desc }}</span>
-              <button type="button" class="btn btn-yellow btn-sm addon-install" data-name="{{ app.name }}" data-cmd="{{ app.cmd }}">INSTALL →</button>
             </div>
             <div class="addon-cmd-row">
               <code class="addon-cmd" id="addon-cmd-{{ app.dir }}">{{ app.cmd }}</code>
               <button type="button" class="btn btn-line btn-sm addon-copy" data-copy="#addon-cmd-{{ app.dir }}">COPY</button>
+              <button type="button" class="btn btn-yellow btn-sm addon-install" data-name="{{ app.name }}" data-cmd="{{ app.cmd }}">INSTALL</button>
             </div>
           </div>
           {% endfor %}
